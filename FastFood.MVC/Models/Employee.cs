@@ -7,6 +7,6 @@ namespace FastFood.MVC.Models
         public int EmployeeID { get; set; }
 
         public string UserID { get; set; } = null!;
-        public IdentityUser User { get; set; } = null!;
+        public virtual ApplicationUser User { get; set; } = null!;
     }
 }

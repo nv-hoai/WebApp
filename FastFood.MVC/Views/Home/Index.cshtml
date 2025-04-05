@@ -1,8 +1,15 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+	@if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+	{
+		<a class="btn btn-primary" asp-controller="Home" asp-action="AccountManagement">Account Management</a>
+	}
 </div>

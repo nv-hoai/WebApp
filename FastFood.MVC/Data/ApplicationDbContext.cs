@@ -6,7 +6,11 @@ using System.Reflection.Metadata;
 
 namespace FastFood.MVC.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext
+        : IdentityDbContext<
+            ApplicationUser, ApplicationRole, string,
+            ApplicationUserClaim, ApplicationUserRole, ApplicationUserLogin,
+            ApplicationRoleClaim, ApplicationUserToken>
     {
         public DbSet<Admin> Admins { get; set; }
         public DbSet<Customer> Customers { get; set; }
@@ -28,38 +32,50 @@ namespace FastFood.MVC.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Customer>()
-                .Property(c => c.LoyaltyPoint)
-                .HasDefaultValue(0);
-
-            modelBuilder.Entity<Order>()
-                .Property(o => o.CreatedAt)
-                .HasDefaultValueSql("getdate()");
-
-            modelBuilder.Entity<Order>()
-                .Property(o => o.Status)
-                .HasDefaultValue("Unconfirmed");
-
-            modelBuilder.Entity<Order>()
-                .Property(o => o.TotalCharge)
-                .HasPrecision(18, 2);
-
             modelBuilder.Entity<OrderDetail>()
-                .Property(o => o.Quantity)
-                .HasDefaultValue(0);
+                .HasKey(od => new { od.OrderID, od.ProductID });
 
-            modelBuilder.Entity<OrderDetail>()
-                .Property(o => o.SubTotal)
-                .HasDefaultValue(0.0)
-                .HasPrecision(18, 2);
+            modelBuilder.Entity<ApplicationUser>(b =>
+            {
+                // Each User can have many UserClaims
+                b.HasMany(e => e.Claims)
+                    .WithOne(e => e.User)
+                    .HasForeignKey(uc => uc.UserId)
+                    .IsRequired();
 
-            modelBuilder.Entity<Product>()
-                .Property(o => o.Price)
-                .HasPrecision(18, 2);
+                // Each User can have many UserLogins
+                b.HasMany(e => e.Logins)
+                    .WithOne(e => e.User)
+                    .HasForeignKey(ul => ul.UserId)
+                    .IsRequired();
 
-            modelBuilder.Entity<Promotion>()
-                .Property(o => o.DiscountAmount)
-                .HasPrecision(18, 2);
+                // Each User can have many UserTokens
+                b.HasMany(e => e.Tokens)
+                    .WithOne(e => e.User)
+                    .HasForeignKey(ut => ut.UserId)
+                    .IsRequired();
+
+                // Each User can have many entries in the UserRole join table
+                b.HasMany(e => e.UserRoles)
+                    .WithOne(e => e.User)
+                    .HasForeignKey(ur => ur.UserId)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<ApplicationRole>(b =>
+            {
+                // Each Role can have many entries in the UserRole join table
+                b.HasMany(e => e.UserRoles)
+                    .WithOne(e => e.Role)
+                    .HasForeignKey(ur => ur.RoleId)
+                    .IsRequired();
+
+                // Each Role can have many associated RoleClaims
+                b.HasMany(e => e.RoleClaims)
+                    .WithOne(e => e.Role)
+                    .HasForeignKey(rc => rc.RoleId)
+                    .IsRequired();
+            });
         }
     }
 }

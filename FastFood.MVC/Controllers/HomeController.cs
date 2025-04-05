@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FastFood.MVC.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FastFood.MVC.Controllers
@@ -19,6 +20,12 @@ namespace FastFood.MVC.Controllers
         }
 
         public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [Authorize(Policy = "AdminAccess")]
+        public IActionResult AccountManagement()
         {
             return View();
         }
