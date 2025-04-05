@@ -1,8 +1,8 @@
 # WebApp
 
 # Instructions
-Đăng kí tài khoản SendGrid để dùng dịch vụ gửi mail (dùng để confirm email hoặc rest password).
-  Lưu ý: Nhớ tạo API Key (lưu lại) và thực hiện Single Sender Verification
+Đăng kí tài khoản SendGrid để dùng dịch vụ gửi mail (dùng để confirm email hoặc rest password). <br>
+Lưu ý: Nhớ tạo API Key (lưu lại) và thực hiện Single Sender Verification <br>
 Sau đó vào EmailSender.cs để nhập email đã đăng kí của mình (thay vào chỗ `hoaiktl.com.vn@gmail.com`)
 
 Sau khi pull về thì thực hiện các bước sau:
