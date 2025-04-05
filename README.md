@@ -18,3 +18,4 @@ Sau khi pull về thì thực hiện các bước sau:
         "Email": "admin@example.com", // Account dành cho admin, có thể thay đổi được
         "Password": "admin@123"
       }
+  7) ~
