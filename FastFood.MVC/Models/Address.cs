@@ -9,6 +9,7 @@
         public string District { get; set; } = null!;
         public string City { get; set; } = null!;
 
-        public virtual Customer? Customer { get; set; } = null!;
+        public int CustomerID { get; set; }
+        public virtual Customer Customer { get; set; } = null!;
     }
 }

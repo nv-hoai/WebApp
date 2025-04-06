@@ -14,6 +14,8 @@ namespace FastFood.MVC.Models
         public virtual Promotion? Promotion { get; set; }
 
         public int Quantity { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
         public decimal SubTotal { get; set; }
     }
 }

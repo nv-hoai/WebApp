@@ -1,17 +1,21 @@
 using System.Diagnostics;
+using FastFood.MVC.Data;
 using FastFood.MVC.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FastFood.MVC.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
@@ -25,9 +29,10 @@ namespace FastFood.MVC.Controllers
         }
 
         [Authorize(Policy = "AdminAccess")]
-        public IActionResult AccountManagement()
+        public async Task<IActionResult> AccountManagement()
         {
-            return View();
+            var users = await _context.Users.ToListAsync();
+            return View(users);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

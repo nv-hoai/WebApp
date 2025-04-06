@@ -1,5 +1,31 @@
-﻿<div class="text-center">
-	<h1 class="display-4">Welcome to the Admin Panel</h1>
-	<p>You have administrative privileges.</p>
-</div>
+﻿@using FastFood.MVC.Models
+@model List<ApplicationUser>
+
+<h1>User Accounts</h1>
+
+<a href="@Url.Action("Create", "Account")" class="btn btn-primary">Create New User</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Id</td>
+                <td>@user.UserName</td>
+                <td>@user.Email</td>
+                <td>
+					<a href="@Url.Action("Edit", "Account", new { id = user.Id })" class="btn btn-warning">Edit</a>
+					<a href="@Url.Action("Delete", "Account", new { id = user.Id })" class="btn btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 

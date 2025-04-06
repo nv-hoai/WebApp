@@ -1,5 +1,6 @@
 ﻿using FastFood.MVC.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace FastFood.MVC.Data
@@ -15,7 +16,7 @@ namespace FastFood.MVC.Data
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
                 await SeedRoles(roleManager);
-                await SeedAdminUser(userManager, adminEmail, adminPassword);
+                await SeedAdminUser(userManager, context, adminEmail, adminPassword);
             }
         }
 
@@ -34,7 +35,7 @@ namespace FastFood.MVC.Data
             }
         }
 
-        private static async Task SeedAdminUser(UserManager<ApplicationUser> userManager, string email, string password)
+        private static async Task SeedAdminUser(UserManager<ApplicationUser> userManager, ApplicationDbContext context, string email, string password)
         {
             var adminUser = await userManager.FindByEmailAsync(email);
 
@@ -52,10 +53,36 @@ namespace FastFood.MVC.Data
                 if (createResult.Succeeded)
                 {
                     await userManager.AddToRoleAsync(adminUser, "Admin");
+
+                    var adminProfile = new Admin
+                    {
+                        UserID = adminUser.Id,
+                        User = adminUser
+                    };
+
+                    context.Admins.Add(adminProfile);
+                    await context.SaveChangesAsync();
                 }
                 else
                 {
                     throw new Exception($"Failed to create admin user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+
+                var existingProfile = await context.Admins
+                    .FirstOrDefaultAsync(a => a.UserID == adminUser.Id);
+
+                if (existingProfile == null)
+                {
+                    context.Admins.Add(new Admin {
+                        UserID = adminUser.Id,
+                        User = adminUser
+                    });
+                    await context.SaveChangesAsync();
                 }
             }
         }

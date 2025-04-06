@@ -32,8 +32,77 @@ namespace FastFood.MVC.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<OrderDetail>()
-                .HasKey(od => new { od.OrderID, od.ProductID });
+            modelBuilder.Entity<Admin>()
+                .HasOne(c => c.User)
+                .WithOne(a => a.Admin)
+                .HasForeignKey<Admin>(a => a.UserID)
+                .OnDelete(DeleteBehavior.Cascade); // Delete Admin if User is deleted
+
+
+            modelBuilder.Entity<Customer>()
+                .HasOne(c => c.User)
+                .WithOne(u => u.Customer)
+                .HasForeignKey<Customer>(c => c.UserID)
+                .OnDelete(DeleteBehavior.Cascade); // Delete Customer if User is deleted
+
+
+            modelBuilder.Entity<Employee>()
+                .HasOne(c => c.User)
+                .WithOne(e => e.Employee)
+                .HasForeignKey<Employee>(e => e.UserID)
+                .OnDelete(DeleteBehavior.Cascade); // Delete Employee if User is deleted
+
+
+            modelBuilder.Entity<Shipper>()
+                .HasOne(c => c.User)
+                .WithOne(s => s.Shipper)
+                .HasForeignKey<Shipper>(s => s.UserID)
+                .OnDelete(DeleteBehavior.Cascade); // Delete Shipper if User is deleted
+
+            modelBuilder.Entity<Address>()
+                .HasOne(a => a.Customer)
+                .WithOne(c => c.Address)
+                .HasForeignKey<Address>(a => a.CustomerID)
+                .OnDelete(DeleteBehavior.Cascade); // Delete Address if Customer is deleted
+
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.Category)
+                .WithMany(c => c.Products)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent deletion of Category if it has Products
+
+            modelBuilder.Entity<Order>(o =>
+            {
+                o.HasOne(o => o.Customer)
+                    .WithMany(e => e.Orders)
+                    .HasForeignKey(o => o.CustomerID)
+                    .OnDelete(DeleteBehavior.NoAction); // Should be manually handled, when cusomter is deleted, orders should be archived or deleted based on business logic
+
+                o.HasOne(o => o.Employee)
+                    .WithMany(e => e.Orders)
+                    .HasForeignKey(o => o.EmployeeID)
+                    .OnDelete(DeleteBehavior.NoAction); 
+
+                o.HasOne(o => o.Shipper)
+                    .WithMany(s => s.Orders)
+                    .HasForeignKey(o => o.ShipperID)
+                    .OnDelete(DeleteBehavior.NoAction);
+            });
+
+
+            modelBuilder.Entity<OrderDetail>(od =>
+            {
+                od.HasKey(od => new { od.OrderID, od.ProductID }); // Composite key
+
+                od.HasOne(od => od.Order)
+                    .WithMany(o => o.OrderDetails)
+                    .HasForeignKey(od => od.OrderID)
+                    .OnDelete(DeleteBehavior.Cascade); // Delete OrderDetails if Order is deleted
+
+                od.HasOne(od => od.Promotion)
+                    .WithOne(p => p.OrderDetail)
+                    .HasForeignKey<OrderDetail>(od => od.PromotionID)
+                    .OnDelete(DeleteBehavior.NoAction); // Promotions are reusable, avoid cascade
+            });
 
             modelBuilder.Entity<ApplicationUser>(b =>
             {
