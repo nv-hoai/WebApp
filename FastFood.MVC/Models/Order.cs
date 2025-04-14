@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FastFood.MVC.Models
 {
-    public enum OrderStatus { Pending, Processing, Shipped, Delivered, Cancelled }
+    public enum OrderStatus { Pending, Processing, Completed, Delivering, Cancelled }
     public class Order
     {
         public int OrderID { get; set; }
@@ -24,5 +24,10 @@ namespace FastFood.MVC.Models
         public DateTime? CompletedAt { get; set; }
 
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new HashSet<OrderDetail>();
+
+        public void CalculateTotalCharge()
+        {
+            TotalCharge = OrderDetails.Sum(od => od.SubTotal);
+        }
     }
 }

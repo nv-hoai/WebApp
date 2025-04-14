@@ -28,13 +28,6 @@ namespace FastFood.MVC.Controllers
             return View();
         }
 
-        [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> AccountManagement()
-        {
-            var users = await _context.Users.ToListAsync();
-            return View(users);
-        }
-
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

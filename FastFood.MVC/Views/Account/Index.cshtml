@@ -1,0 +1,65 @@
+﻿@using FastFood.MVC.Models
+@using FastFood.MVC.ViewModels.Account
+@model List<UserViewModel>
+
+<h1>User Accounts</h1>
+
+<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerModal">
+    Add new account
+</button>
+
+<div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            @await Html.PartialAsync("_RegisterContent", new UserViewModel())
+        </div>
+    </div>
+</div>
+
+<partial name="_DeleteConfirmation" />
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Index</th>
+            <th>Email</th>
+            <th>Phone number</th>
+            <th>Role</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Index</td>
+                <td>@user.Email</td>
+                <td>@user.PhoneNumber</td>
+                <td>@user.RoleName</td>
+                <td>
+					<a href="@Url.Action("Edit", "Account", new { id = user.Id })" class="btn btn-warning">Edit</a>
+                </td>
+                <td>
+                    <a class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                        onclick="showDeleteModal('@user.Id', '@Url.Action("Delete", "Account", new { id = user.Id })')">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script>
+    function showDeleteModal(itemId, deleteUrl) {
+        document.getElementById('itemIdToDelete').value = itemId;
+        document.getElementById('deleteForm').action = deleteUrl;
+        var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+

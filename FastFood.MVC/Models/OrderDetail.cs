@@ -17,5 +17,17 @@ namespace FastFood.MVC.Models
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal SubTotal { get; set; }
+
+        public void CaculateSubTotal()
+        {
+            if (Promotion != null)
+            {
+                SubTotal = Quantity * (Product.Price - Promotion.DiscountAmount);
+            }
+            else
+            {
+                SubTotal = Quantity * Product.Price;
+            }
+        }
     }
 }
