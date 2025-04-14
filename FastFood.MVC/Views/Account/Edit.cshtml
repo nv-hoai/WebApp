@@ -1,0 +1,49 @@
+﻿@using FastFood.MVC.ViewModels.Account
+@model UserViewModel
+
+@{
+	ViewData["Title"] = "Edit the account infomation";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="editForm" asp-action="Edit" asp-controller="Account" method="post">
+            <hr />
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="mb-3">
+                <input class="form-control" type="hidden" name="oldEmail" id="userEmail"/>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email">Email</label>
+                <input asp-for="Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="PhoneNumber">Phone number</label>
+                <input asp-for="PhoneNumber" class="form-control" autocomplete="tel" aria-required="true" placeholder="0123456789" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="RoleName" class="form-label">Role</label>
+                <select asp-for="RoleName" asp-items="Model.Roles" class="form-control"></select>
+                <span asp-validation-for="RoleName" class="text-danger"></span>
+            </div>
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+			$('#userEmail').val('@Model.Email');
+        });
+    </script>
+}
+
+
+
+

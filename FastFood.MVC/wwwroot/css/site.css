@@ -20,3 +20,11 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+select.form-control {
+    appearance: auto;
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+    padding-right: 2rem;
+    background-image: none;
+}

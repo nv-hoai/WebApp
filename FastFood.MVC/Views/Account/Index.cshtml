@@ -1,0 +1,92 @@
+﻿@using FastFood.MVC.Models
+@using FastFood.MVC.ViewModels.Account
+@model List<UserViewModel>
+
+<h1>User Accounts</h1>
+
+<a class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerModal">
+    Add new account
+</a>
+
+<div id="registerContainer">
+	<partial name="_RegisterModal" model="new UserViewModel()"/>
+</div>
+
+<div id="deleteContainer">
+    <partial name="_DeleteModal" />
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Index</th>
+            <th>Email</th>
+            <th>Phone number</th>
+            <th>Role</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Index</td>
+                <td>@user.Email</td>
+                <td>@user.PhoneNumber</td>
+                <td>@user.RoleName</td>
+                <td>
+					<a class="btn btn-warning" asp-action="Edit" asp-controller="Account" asp-route-email="@user.Email">Edit</a>
+                </td>
+                <td>
+                    <a class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                        onclick="showDeleteModal('@user.Email', '@Url.Action("Delete", "Account", new { email = user.Email })')">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function showDeleteModal(email, deleteUrl) {
+            $('#itemIdToDelete').val(email);
+            $('#deleteForm').attr('action', deleteUrl);
+            $('#deleteModal').modal('show');
+        }
+    </script>
+
+    <script>
+        $(function () {
+            $(document).on('submit', '#registerForm', function (e) {
+                e.preventDefault();
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    success: function (res) {
+                        $('#registerModal').modal('hide');
+                        if (res.success) {
+                            location.reload();
+                        } else {
+                            $('#registerContainer').html(res);
+                            $('#registerModal').modal('show');
+                            $.validator.unobtrusive.parse('#registerForm');
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("Error submitting the form:", xhr);
+                        alert("There was an error processing your request. Please try again.");
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+
