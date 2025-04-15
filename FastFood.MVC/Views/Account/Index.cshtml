@@ -52,13 +52,13 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-    <script>
+<script>
         function showDeleteModal(email, deleteUrl) {
             $('#itemIdToDelete').val(email);
             $('#deleteForm').attr('action', deleteUrl);
             $('#deleteModal').modal('show');
-        }
-    </script>
+    }
+</script>
 
     <script>
         $(function () {
