@@ -37,11 +37,14 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
+<script>
         $(function () {
 			$('#userEmail').val('@Model.Email');
-        });
-    </script>
+    });
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }
 
 

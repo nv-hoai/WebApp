@@ -10,11 +10,14 @@
 
 <div id="registerContainer">
 	<partial name="_RegisterModal" model="new UserViewModel()"/>
-</div>
+        </div>
 
 <div id="deleteContainer">
     <partial name="_DeleteModal" />
+    </div>
 </div>
+
+<partial name="_DeleteConfirmation" />
 
 <table class="table">
     <thead>
@@ -52,13 +55,13 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-    <script>
+<script>
         function showDeleteModal(email, deleteUrl) {
             $('#itemIdToDelete').val(email);
             $('#deleteForm').attr('action', deleteUrl);
             $('#deleteModal').modal('show');
-        }
-    </script>
+    }
+</script>
 
     <script>
         $(function () {
