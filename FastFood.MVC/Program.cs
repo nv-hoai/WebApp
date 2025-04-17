@@ -49,7 +49,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
-builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AdminAccess", policy => policy.RequireRole("Admin"))

@@ -1,55 +1,54 @@
 ﻿using Microsoft.Extensions.Options;
-using SendGrid.Helpers.Mail;
-using SendGrid;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Mail;
 
 namespace FastFood.MVC.Services
 {
-    public class EmailSender: IEmailSender
+    public class EmailSender : IEmailSender
     {
-        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<EmailSender> _logger;
 
-        public EmailSender(IOptions<AuthMessageSenderOptions> optionsAccessor,
-                           ILogger<EmailSender> logger)
+        public EmailSender(IConfiguration configuration, ILogger<EmailSender> logger)
         {
-            Options = optionsAccessor.Value;
+            _configuration = configuration;
             _logger = logger;
         }
 
-        public AuthMessageSenderOptions Options { get; } //Set with Secret Manager.
-
-        public async Task SendEmailAsync(string toEmail, string subject, string message)
+        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
-            if (string.IsNullOrEmpty(Options.SendGridKey))
-            {
-                throw new Exception("Null SendGridKey");
-            }
-            await Execute(Options.SendGridKey, subject, message, toEmail);
-        }
+            var fromEmail = _configuration["EmailSettings:Email"]!;
+            var fromPassword = _configuration["EmailSettings:Password"]!;
 
-        public async Task Execute(string apiKey, string subject, string message, string toEmail)
-        {
-            var client = new SendGridClient(apiKey);
-            var msg = new SendGridMessage()
+            using var smtpClient = new SmtpClient("smtp.gmail.com")
             {
-                From = new EmailAddress("hoaiktl.com.vn@gmail.com", "Password Recovery"),
-                Subject = subject,
-                PlainTextContent = message,
-                HtmlContent = message
+                Port = 587,
+                Credentials = new NetworkCredential(fromEmail, fromPassword),
+                EnableSsl = true,
             };
-            msg.AddTo(new EmailAddress(toEmail));
 
-            // Disable click tracking.
-            // See https://sendgrid.com/docs/User_Guide/Settings/tracking.html
-            msg.SetClickTracking(false, false);
-            var response = await client.SendEmailAsync(msg);
+            using var mailMessage = new MailMessage
+            {
+                From = new MailAddress(fromEmail),
+                Subject = subject,
+                Body = htmlMessage,
+                IsBodyHtml = true,
+            };
+            mailMessage.To.Add(email);
 
-            var responseBody = await response.Body.ReadAsStringAsync();
-            _logger.LogInformation($"SendGrid response: {(int)response.StatusCode} - {response.StatusCode}");
-            _logger.LogInformation($"Response body: {responseBody}");
-            _logger.LogInformation(response.IsSuccessStatusCode
-                                    ? $"Email to {toEmail} queued successfully!"
-                                    : $"Failure Email to {toEmail}");
+            _logger.LogDebug("Preparing to send email to {Email}", email);
+
+            try
+            {
+                await smtpClient.SendMailAsync(mailMessage);
+                _logger.LogInformation("Email sent to {Email}", email);
+            }
+            catch (SmtpException smtpEx)
+            {
+                _logger.LogWarning(smtpEx, "SMTP error sending email to {Email}", email);
+            }
         }
     }
 }
