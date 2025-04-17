@@ -10,21 +10,21 @@ using Microsoft.EntityFrameworkCore;
 namespace FastFood.MVC.Controllers
 {
     [Authorize(Policy = "AdminAccess")]
-    public class AccountController : Controller
+    public class AdminController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserStore<ApplicationUser> _userStore;
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
-        private readonly ILogger<AccountController> _logger;
+        private readonly ILogger<AdminController> _logger;
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _context;
 
-        public AccountController(
+        public AdminController(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
-            ILogger<AccountController> logger,
+            ILogger<AdminController> logger,
             IEmailSender emailSender,
             ApplicationDbContext context)
         {
@@ -51,7 +51,7 @@ namespace FastFood.MVC.Controllers
                 }).ToListAsync();
 
 
-            var viewModel = users
+            var model = users
                 .Select((user, index) => new UserViewModel
                 {
                     Index = index + 1,  // Start from 1 instead of 0
@@ -61,7 +61,7 @@ namespace FastFood.MVC.Controllers
                 })
                 .ToList();
 
-            return View(viewModel);
+            return View(model);
         }
 
         [HttpPost]

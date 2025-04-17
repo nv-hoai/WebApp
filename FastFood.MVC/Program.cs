@@ -53,7 +53,7 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AdminAccess", policy => policy.RequireRole("Admin"))
     .AddPolicy("StaffAccess", policy =>
-        policy.RequireRole("Employee", "Shipper"));
+        policy.RequireRole("Admin", "Employee", "Shipper"));
 
 var app = builder.Build();
 

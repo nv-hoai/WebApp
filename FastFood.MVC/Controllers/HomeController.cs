@@ -18,9 +18,12 @@ namespace FastFood.MVC.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var categories = await _context.Categories
+                .Include(c => c.Products)
+                .ToListAsync();
+            return View(categories);
         }
 
         public IActionResult Privacy()
