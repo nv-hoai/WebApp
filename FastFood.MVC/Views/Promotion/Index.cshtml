@@ -6,10 +6,8 @@
 }
 
 <h1>Index</h1>
+<partial name="_IndexPartial" />
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
 <table class="table">
     <thead>
         <tr>
@@ -38,9 +36,9 @@
                 @Html.DisplayFor(modelItem => item.ExpiryDate)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.PromotionID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.PromotionID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.PromotionID">Delete</a>
+                <a class="btn btn-info" asp-action="Details" asp-route-id="@item.PromotionID">Details</a>
+				<partial name="_EditPartial" model="item" />
+				<partial name="_DeletePartial" model="item" />
             </td>
         </tr>
 }

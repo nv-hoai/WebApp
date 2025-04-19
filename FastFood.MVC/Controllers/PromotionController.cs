@@ -7,17 +7,21 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FastFood.MVC.Data;
 using FastFood.MVC.Models;
+using FastFood.MVC.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using FastFood.MVC.Services;
 
 namespace FastFood.MVC.Controllers
 {
     public class PromotionController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly AzureBlobService _blobService;
 
-        public PromotionController(ApplicationDbContext context)
+        public PromotionController(ApplicationDbContext context, AzureBlobService blobService)
         {
             _context = context;
+            _blobService = blobService;
         }
 
         public async Task<IActionResult> Index()
@@ -46,22 +50,36 @@ namespace FastFood.MVC.Controllers
         [Authorize(Policy = "AdminAccess")]
         public IActionResult Create()
         {
-            Promotion promotion = new Promotion();
-            return View(promotion);
+            PromotionViewModel model = new PromotionViewModel();
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Create(Promotion promotion)
+        public async Task<IActionResult> Create(PromotionViewModel model)
         {
             if (ModelState.IsValid)
             {
+                var promotion = new Promotion
+                {
+                    Description = model.Description,
+                    Code = model.Code,
+                    DiscountAmount = model.DiscountAmount,
+                    ExpiryDate = model.ExpiryDate
+                };
+
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    promotion.ImageUrl = await _blobService.UploadFileAsync(model.ImageFile);
+                }
+
+
                 _context.Add(promotion);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(promotion);
+            return View(model);
         }
 
         [HttpGet]

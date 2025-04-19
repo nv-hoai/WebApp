@@ -49,10 +49,16 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddScoped<AzureBlobService>();
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AdminAccess", policy => policy.RequireRole("Admin"))
-    .AddPolicy("StaffAccess", policy =>
+    .AddPolicy("CustomerAccess", policy => policy.RequireRole("Customer"))
+    .AddPolicy("EmployeeAccess", policy => policy.RequireRole("Employee"))
+    .AddPolicy("ShipperAccess", policy => policy.RequireRole("Shipper"))
+    .AddPolicy("AdminOrEmployeeAccess", policy =>
+        policy.RequireRole("Admin", "Employee"))
+    .AddPolicy("OrderManagementAccess", policy =>
         policy.RequireRole("Admin", "Employee", "Shipper"));
 
 var app = builder.Build();

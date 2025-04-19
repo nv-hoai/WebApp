@@ -1,29 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FastFood.MVC.Data;
 using FastFood.MVC.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace FastFood.MVC.Controllers
 {
+    [Authorize]
     public class OrderController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuthorizationService _authorization;
 
-        public OrderController(ApplicationDbContext context)
+        public OrderController(ApplicationDbContext context, IAuthorizationService authorization)
         {
             _context = context;
+            _authorization = authorization;
         }
 
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Orders.Include(o => o.Customer).Include(o => o.Employee).Include(o => o.Shipper);
-            return View(await applicationDbContext.ToListAsync());
+            if ((await _authorization.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
+            {
+                var managementOrders = await _context.Orders
+                    .Include(o => o.Customer)
+                    .Include(o => o.Employee)
+                    .Include(o => o.Shipper)
+                    .ToListAsync();
+                return View(managementOrders);
+            }
+
+            var customerOrders = await _context.Orders
+                .Include(o => o.Customer)
+                .Where(o => o.Customer.UserID == User.FindFirstValue(ClaimTypes.NameIdentifier))
+                .ToListAsync();
+
+            return View(customerOrders);
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -46,7 +60,7 @@ namespace FastFood.MVC.Controllers
             return View(order);
         }
 
-        [Authorize(Policy = "StaffAccess")]
+        [Authorize(Policy = "AdminOrEmployeeAccess")]
         public IActionResult Create()
         {
             ViewData["CustomerID"] = new SelectList(_context.Customers, "CustomerID", "CustomerID");
@@ -57,7 +71,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "StaffAccess")]
+        [Authorize(Policy = "AdminOrEmployeeAccess")]
         public async Task<IActionResult> Create([Bind("OrderID,CustomerID,ShipperID,EmployeeID,TotalCharge,Status,CreatedAt,CompletedAt")] Order order)
         {
             if (ModelState.IsValid)
@@ -72,7 +86,7 @@ namespace FastFood.MVC.Controllers
             return View(order);
         }
 
-        [Authorize(Policy = "StaffAccess")]
+        [Authorize(Policy = "OrderManagementAcess")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -93,7 +107,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "StaffAccess")]
+        [Authorize(Policy = "OrderManagementAcess")]
         public async Task<IActionResult> Edit(int id, [Bind("OrderID,CustomerID,ShipperID,EmployeeID,TotalCharge,Status,CreatedAt,CompletedAt")] Order order)
         {
             if (id != order.OrderID)
@@ -127,7 +141,7 @@ namespace FastFood.MVC.Controllers
             return View(order);
         }
 
-        [Authorize(Policy = "StaffAccess")]
+        [Authorize(Policy = "AdminAccess")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -150,7 +164,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "StaffAccess")]
+        [Authorize(Policy = "AdminAccess")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var order = await _context.Orders.FindAsync(id);

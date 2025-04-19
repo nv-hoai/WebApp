@@ -1,6 +1,6 @@
 ﻿using FastFood.MVC.Data;
 using FastFood.MVC.Models;
-using FastFood.MVC.ViewModels.Account;
+using FastFood.MVC.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -138,7 +138,10 @@ namespace FastFood.MVC.Controllers
             if (ModelState.IsValid)
             {
                 if (model.Email != oldEmail)
+                {
+                    await _userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
                     await _emailStore.SetEmailAsync(user, model.Email, CancellationToken.None);
+                }
                 if (model.PhoneNumber != user.PhoneNumber)
                     user.PhoneNumber = model.PhoneNumber;
 

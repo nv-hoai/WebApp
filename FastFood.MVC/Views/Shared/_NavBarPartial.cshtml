@@ -1,0 +1,21 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+
+<li class="nav-item">
+	<a class="nav-link text-dark" asp-controller="Category" asp-action="Index">Category</a>
+</li>
+<li class="nav-item">
+	<a class="nav-link text-dark" asp-controller="Order" asp-action="Index">Order</a>
+</li>
+
+<li class="nav-item">
+	<a class="nav-link text-dark" asp-controller="Promotion" asp-action="Index">Promotion</a>
+</li>
+
+@if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+{
+	<li class="nav-item">
+		<a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Management</a>
+	</li>
+}
+
