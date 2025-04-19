@@ -1,4 +1,5 @@
-﻿@model FastFood.MVC.Models.Promotion
+﻿@using FastFood.MVC.ViewModels
+@model PromotionViewModel
 
 @{
     ViewData["Title"] = "Create";
@@ -11,8 +12,12 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Description" class="control-label"></label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+            </div>
             <div class="form-group">
                 <label asp-for="Code" class="control-label"></label>
                 <input asp-for="Code" class="form-control" />
@@ -29,14 +34,18 @@
                 <span asp-validation-for="ExpiryDate" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <label asp-for="ImageFile" class="control-label d-block"></label>
+                <input type="file" asp-for="ImageFile" class="form-control-file"
+                       accept="image/*" id="imageUpload" />
+                <span asp-validation-for="ImageFile" class="text-danger"></span>
+            </div>
+            <br />
+            <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
+                <a class="btn btn-info" asp-action="Index">Back to List</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {

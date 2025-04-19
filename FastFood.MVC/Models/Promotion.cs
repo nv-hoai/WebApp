@@ -8,6 +8,9 @@ namespace FastFood.MVC.Models
     {
         public int PromotionID { get; set; }
 
+        public string? Description { get; set; }
+        public string? ImageUrl { get; set; }
+
         [StringLength(20, MinimumLength = 3)]
         public string Code { get; set; } = null!;
 

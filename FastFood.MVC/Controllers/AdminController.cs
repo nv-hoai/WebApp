@@ -138,7 +138,10 @@ namespace FastFood.MVC.Controllers
             if (ModelState.IsValid)
             {
                 if (model.Email != oldEmail)
+                {
+                    await _userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
                     await _emailStore.SetEmailAsync(user, model.Email, CancellationToken.None);
+                }
                 if (model.PhoneNumber != user.PhoneNumber)
                     user.PhoneNumber = model.PhoneNumber;
 

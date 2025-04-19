@@ -49,6 +49,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddScoped<AzureBlobService>();
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AdminAccess", policy => policy.RequireRole("Admin"))
