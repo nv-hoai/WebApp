@@ -12,28 +12,28 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Code)
+                @Html.DisplayNameFor(model => model.Name)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.DiscountAmount)
+                @Html.DisplayNameFor(model => model.Description)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.ExpiryDate)
+                @Html.DisplayNameFor(model => model.DiscountPercent)
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
+    @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.Code)
+                @Html.DisplayFor(modelItem => item.Name)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.DiscountAmount)
+                @Html.DisplayFor(modelItem => item.Description)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.ExpiryDate)
+                @Html.DisplayFor(modelItem => item.DiscountPercent)
             </td>
             <td>
                 <a class="btn btn-info" asp-action="Details" asp-route-id="@item.PromotionID">Details</a>
@@ -41,6 +41,6 @@
 				<partial name="_DeletePartial" model="item" />
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>

@@ -1,29 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FastFood.MVC.Models;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace FastFood.MVC.Models
+namespace FastFood.MVC.ViewModels
 {
-    public class Product
+    public class ProductViewModel
     {
         public int ProductID { get; set; }
-
         public int CategoryID { get; set; }
-        public virtual Category Category { get; set; } = null!;
-
         public string Name { get; set; } = null!;
-
         public string? Description { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
-        public string? ImageUrl { get; set; }
-
-        [Display(Name = "Sold quantity")]
+        public IFormFile? ImageFile { get; set; }
         public int SoldQuantity { get; set; } = 0;
         public bool IsCarouselItem { get; set; } = false;
         public bool IsNew { get; set; } = false;
         public bool IsPopular { get; set; } = false;
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new HashSet<OrderDetail>();
-        public virtual ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
     }
 }

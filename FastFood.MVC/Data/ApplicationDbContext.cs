@@ -70,6 +70,9 @@ namespace FastFood.MVC.Data
                 .WithMany(c => c.Products)
                 .OnDelete(DeleteBehavior.Restrict); // Prevent deletion of Category if it has Products
 
+            modelBuilder.Entity<Product>()
+                .ToTable(t => t.HasCheckConstraint("CK_Product_Price", "[Price] >= 0"));
+
             modelBuilder.Entity<Order>(o =>
             {
                 o.HasOne(o => o.Customer)

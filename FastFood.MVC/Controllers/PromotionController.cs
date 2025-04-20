@@ -37,6 +37,8 @@ namespace FastFood.MVC.Controllers
             }
 
             var promotion = await _context.Promotions
+                .Include(p => p.Product)
+                .Include(p => p.Category)
                 .FirstOrDefaultAsync(m => m.PromotionID == id);
             if (promotion == null)
             {
@@ -50,36 +52,26 @@ namespace FastFood.MVC.Controllers
         [Authorize(Policy = "AdminAccess")]
         public IActionResult Create()
         {
-            PromotionViewModel model = new PromotionViewModel();
+            Promotion model = new Promotion();
+            ViewData["Product"] = new SelectList(_context.Products, "ProductID", "Name");
+            ViewData["Category"] = new SelectList(_context.Categories, "CategoryID", "Name");
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Create(PromotionViewModel model)
+        public async Task<IActionResult> Create(Promotion promotion)
         {
             if (ModelState.IsValid)
             {
-                var promotion = new Promotion
-                {
-                    Description = model.Description,
-                    Code = model.Code,
-                    DiscountAmount = model.DiscountAmount,
-                    ExpiryDate = model.ExpiryDate
-                };
-
-                if (model.ImageFile != null && model.ImageFile.Length > 0)
-                {
-                    promotion.ImageUrl = await _blobService.UploadFileAsync(model.ImageFile);
-                }
-
-
                 _context.Add(promotion);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(model);
+            ViewData["Product"] = new SelectList(_context.Products, "ProductID", "Name");
+            ViewData["Category"] = new SelectList(_context.Categories, "CategoryID", "Name");
+            return View(promotion);
         }
 
         [HttpGet]
@@ -96,13 +88,16 @@ namespace FastFood.MVC.Controllers
             {
                 return NotFound();
             }
+
+            ViewData["Product"] = new SelectList(_context.Products, "ProductID", "Name");
+            ViewData["Category"] = new SelectList(_context.Categories, "CategoryID", "Name");
             return View(promotion);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Edit(int id, [Bind("PromotionID,Code,DiscountAmount,ExpiryDate")] Promotion promotion)
+        public async Task<IActionResult> Edit(int id, Promotion promotion)
         {
             if (id != promotion.PromotionID)
             {
@@ -129,6 +124,8 @@ namespace FastFood.MVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["Product"] = new SelectList(_context.Products, "ProductID", "Name");
+            ViewData["Category"] = new SelectList(_context.Categories, "CategoryID", "Name");
             return View(promotion);
         }
 

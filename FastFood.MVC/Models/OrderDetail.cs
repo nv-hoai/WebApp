@@ -22,7 +22,7 @@ namespace FastFood.MVC.Models
         {
             if (Promotion != null)
             {
-                SubTotal = Quantity * (Product.Price - Promotion.DiscountAmount);
+                SubTotal = Quantity * Product.Price * (1 - Promotion.DiscountPercent);
             }
             else
             {

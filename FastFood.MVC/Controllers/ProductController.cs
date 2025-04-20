@@ -8,22 +8,41 @@ using Microsoft.EntityFrameworkCore;
 using FastFood.MVC.Data;
 using FastFood.MVC.Models;
 using Microsoft.AspNetCore.Authorization;
+using FastFood.MVC.ViewModels;
+using FastFood.MVC.Services;
 
 namespace FastFood.MVC.Controllers
 {
     public class ProductController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly AzureBlobService _blobService;
 
-        public ProductController(ApplicationDbContext context)
+        public ProductController(ApplicationDbContext context, AzureBlobService blobService)
         {
             _context = context;
+            _blobService = blobService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? category)
         {
-            var applicationDbContext = _context.Products.Include(p => p.Category);
-            return View(await applicationDbContext.ToListAsync());
+            List<Product> products;
+
+            if (category == null) 
+            {
+                products = await _context.Products
+                    .Where(p => !p.IsCarouselItem)
+                    .Include(p => p.Category)
+                    .ToListAsync();
+                return View(products);
+            }
+
+            products = await _context.Products
+                .Where(p => !p.IsCarouselItem)
+                .Include(p => p.Category)
+                .Where(products => products.Category.Name == category)
+                .ToListAsync();
+            return View(products);
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -47,23 +66,40 @@ namespace FastFood.MVC.Controllers
         [Authorize(Policy = "AdminAccess")]
         public IActionResult Create()
         {
-            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "CategoryID");
-            return View();
+            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name");
+            ProductViewModel model = new ProductViewModel();
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Create([Bind("ProductID,CategoryID,Name,Description,Price,Image")] Product product)
+        public async Task<IActionResult> Create(ProductViewModel model)
         {
             if (ModelState.IsValid)
             {
+                Product product = new Product()
+                {
+                    Name = model.Name,
+                    CategoryID = model.CategoryID,
+                    Description = model.Description,
+                    Price = model.Price,
+                    IsNew = model.IsNew,
+                    IsCarouselItem = model.IsCarouselItem,
+                    IsPopular = model.IsPopular
+                };
+
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    product.ImageUrl = await _blobService.UploadFileAsync(model.ImageFile);
+                }
+
                 _context.Add(product);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "CategoryID", product.CategoryID);
-            return View(product);
+            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name", model.CategoryID);
+            return View(model);
         }
 
         [Authorize(Policy = "AdminAccess")]
@@ -79,14 +115,14 @@ namespace FastFood.MVC.Controllers
             {
                 return NotFound();
             }
-            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "CategoryID", product.CategoryID);
+            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name", product.CategoryID);
             return View(product);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Edit(int id, [Bind("ProductID,CategoryID,Name,Description,Price,Image")] Product product)
+        public async Task<IActionResult> Edit(int id, ProductViewModel product)
         {
             if (id != product.ProductID)
             {
@@ -113,7 +149,7 @@ namespace FastFood.MVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "CategoryID", product.CategoryID);
+            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name", product.CategoryID);
             return View(product);
         }
 
