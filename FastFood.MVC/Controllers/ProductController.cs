@@ -31,7 +31,6 @@ namespace FastFood.MVC.Controllers
             if (category == null) 
             {
                 products = await _context.Products
-                    .Where(p => !p.IsCarouselItem)
                     .Include(p => p.Category)
                     .ToListAsync();
                 return View(products);
