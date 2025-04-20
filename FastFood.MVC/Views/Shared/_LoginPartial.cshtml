@@ -2,7 +2,7 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
+@* <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
     <li class="nav-item">
@@ -23,4 +23,23 @@ else
         <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
     </li>
 }
-</ul>
+</ul> *@
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Tài khoản</a></li>
+    <li>
+        <form class="form-inline p-0 m-0" asp-area="Identity" asp-page="/Account/Logout"
+              asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button type="submit" class="dropdown-item ps-3">
+                Đăng xuất
+            </button>
+        </form>
+    </li>
+}
+else
+{
+    <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Login">Đăng nhập</a></li>
+    <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Register">Đăng kí</a></li>
+}
+

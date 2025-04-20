@@ -4,6 +4,7 @@ using FastFood.MVC.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FastFood.MVC.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250419140838_ProductUpdate")]
+    partial class ProductUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -443,17 +446,11 @@ namespace FastFood.MVC.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("SoldQuantity")
-                        .HasColumnType("int");
-
                     b.HasKey("ProductID");
 
                     b.HasIndex("CategoryID");
 
-                    b.ToTable("Products", t =>
-                        {
-                            t.HasCheckConstraint("CK_Product_Price", "[Price] >= 0");
-                        });
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("FastFood.MVC.Models.Promotion", b =>
@@ -464,39 +461,24 @@ namespace FastFood.MVC.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromotionID"));
 
-                    b.Property<int?>("CategoryID")
-                        .HasColumnType("int");
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("DiscountPercent")
+                    b.Property<decimal>("DiscountAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal>("MaximumDiscountAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ProductID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RequiredQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
                     b.HasKey("PromotionID");
-
-                    b.HasIndex("CategoryID");
-
-                    b.HasIndex("ProductID");
 
                     b.ToTable("Promotions");
                 });
@@ -690,21 +672,6 @@ namespace FastFood.MVC.Data.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("FastFood.MVC.Models.Promotion", b =>
-                {
-                    b.HasOne("FastFood.MVC.Models.Category", "Category")
-                        .WithMany("Promotions")
-                        .HasForeignKey("CategoryID");
-
-                    b.HasOne("FastFood.MVC.Models.Product", "Product")
-                        .WithMany("Promotions")
-                        .HasForeignKey("ProductID");
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("FastFood.MVC.Models.Shipper", b =>
                 {
                     b.HasOne("FastFood.MVC.Models.ApplicationUser", "User")
@@ -745,8 +712,6 @@ namespace FastFood.MVC.Data.Migrations
             modelBuilder.Entity("FastFood.MVC.Models.Category", b =>
                 {
                     b.Navigation("Products");
-
-                    b.Navigation("Promotions");
                 });
 
             modelBuilder.Entity("FastFood.MVC.Models.Customer", b =>
@@ -769,8 +734,6 @@ namespace FastFood.MVC.Data.Migrations
             modelBuilder.Entity("FastFood.MVC.Models.Product", b =>
                 {
                     b.Navigation("OrderDetails");
-
-                    b.Navigation("Promotions");
                 });
 
             modelBuilder.Entity("FastFood.MVC.Models.Promotion", b =>

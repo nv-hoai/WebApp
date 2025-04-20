@@ -1,4 +1,4 @@
-﻿@model FastFood.MVC.Models.Product
+﻿@model FastFood.MVC.ViewModels.ProductViewModel
 
 @{
     ViewData["Title"] = "Create";
@@ -11,7 +11,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="CategoryID" class="control-label"></label>
@@ -33,9 +33,24 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Image" class="control-label"></label>
-                <input asp-for="Image" class="form-control" />
-                <span asp-validation-for="Image" class="text-danger"></span>
+                <label asp-for="ImageFile" class="control-label"></label>
+                <input asp-for="ImageFile" class="form-control" />
+                <span asp-validation-for="ImageFile" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="IsNew" class="control-label"></label>
+                @Html.CheckBoxFor(model => model.IsNew)
+                <span asp-validation-for="IsNew" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="IsCarouselItem" class="control-label"></label>
+                @Html.CheckBoxFor(model => model.IsCarouselItem)
+                <span asp-validation-for="IsCarouselItem" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="IsPopular" class="control-label"></label>
+                @Html.CheckBoxFor(model => model.IsPopular)
+                <span asp-validation-for="IsPopular" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />

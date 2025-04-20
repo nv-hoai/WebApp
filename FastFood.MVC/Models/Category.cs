@@ -7,8 +7,8 @@
         public string Name { get; set; } = null!;
 
         public string? Description { get; set; }
-        public string? Image { get; set; }
 
         public virtual ICollection<Product> Products { get; set; } = new HashSet<Product>();
+        public virtual ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
     }
 }

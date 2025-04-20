@@ -20,9 +20,6 @@
 
   <ItemGroup>
     <Folder Include="Authorization\" />
-    <Folder Include="wwwroot\images\categories\" />
-    <Folder Include="wwwroot\images\promotions\" />
-    <Folder Include="wwwroot\images\products\" />
   </ItemGroup>
 
 </Project>

@@ -12,22 +12,46 @@
     <hr />
     <dl class="row">
         <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        @if (Model.ProductID != null)
+        {
+            <dt class="col-sm-2">
+                Product
+            </dt>
+            <dd class="col-sm-10">
+                @Model.Product?.Name
+            </dd>
+        }
+        else
+        {
+            <dt class="col-sm-2">
+                Category
+            </dt>
+            <dd class="col-sm-10">
+                @Model.Category?.Name
+            </dd>
+        }
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Description)
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Description)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Code)
+            @Html.DisplayNameFor(model => model.DiscountPercent)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Code)
+            @Html.DisplayFor(model => model.DiscountPercent)
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DiscountAmount)
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.StartDate)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DiscountAmount)
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.StartDate)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.ExpiryDate)
@@ -36,7 +60,6 @@
             @Html.DisplayFor(model => model.ExpiryDate)
         </dd>
     </dl>
-    <img src="@Model.ImageUrl" alt="no-image" style="max-height: 100px;" />
 </div>
 <br />
 <div>

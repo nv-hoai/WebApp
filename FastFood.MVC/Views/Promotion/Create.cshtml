@@ -1,5 +1,5 @@
 ﻿@using FastFood.MVC.ViewModels
-@model PromotionViewModel
+@model Promotion
 
 @{
     ViewData["Title"] = "Create";
@@ -15,18 +15,36 @@
         <form asp-action="Create" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Product (Sản phẩm nào được áp dụng)</label>
+                <select asp-for="ProductID" class="form-control" asp-items="ViewBag.Product">
+                    <option value="">-- Select a Product --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Category (Toàn bộ sản phẩm trong danh mục có thể áp dụng)</label>
+                <select asp-for="CategoryID" class="form-control" asp-items="ViewBag.Category">
+                    <option value="">-- Select a category --</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
                 <textarea asp-for="Description" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Code" class="control-label"></label>
-                <input asp-for="Code" class="form-control" />
-                <span asp-validation-for="Code" class="text-danger"></span>
+                <label asp-for="DiscountPercent" class="control-label"></label>
+                <input asp-for="DiscountPercent" class="form-control" />
+                <span asp-validation-for="DiscountPercent" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="DiscountAmount" class="control-label"></label>
-                <input asp-for="DiscountAmount" class="form-control" />
-                <span asp-validation-for="DiscountAmount" class="text-danger"></span>
+                <label asp-for="StartDate" class="control-label"></label>
+                <input asp-for="StartDate" class="form-control" />
+                <span asp-validation-for="StartDate" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="ExpiryDate" class="control-label"></label>
@@ -34,10 +52,9 @@
                 <span asp-validation-for="ExpiryDate" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="ImageFile" class="control-label d-block"></label>
-                <input type="file" asp-for="ImageFile" class="form-control-file"
-                       accept="image/*" id="imageUpload" />
-                <span asp-validation-for="ImageFile" class="text-danger"></span>
+                <label asp-for="RequiredQuantity" class="control-label"></label>
+                <input asp-for="RequiredQuantity" class="form-control" />
+                <span asp-validation-for="RequiredQuantity" class="text-danger"></span>
             </div>
             <br />
             <div class="form-group">
@@ -47,6 +64,7 @@
         </form>
     </div>
 </div>
+
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
