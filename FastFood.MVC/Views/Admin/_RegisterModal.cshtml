@@ -6,7 +6,7 @@
         <div class="modal-content">
             <form asp-action="Register" asp-controller="Admin" method="post" id="registerForm">
                 <div class="modal-header">
-                    <h5 class="modal-title">Register new user</h5>
+                    <h5 class="modal-title">Đăng kí tài khoản mới</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -22,19 +22,19 @@
                         <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                     </div>
                     <div class="form-group">
-                        <label asp-for="Password"></label>
+                        <label asp-for="Password" class="form-label"></label>
                         <input asp-for="Password" class="form-control" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
                     <div class="form-group">
-                        <label asp-for="RoleName">Role</label>
+                        <label asp-for="RoleName"></label>
                         <select asp-for="RoleName" asp-items="Model.Roles" class="form-control"></select>
                         <span asp-validation-for="RoleName" class="text-danger"></span>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Register</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Đăng kí</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </form>
         </div>

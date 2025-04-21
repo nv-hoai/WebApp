@@ -5,6 +5,7 @@ namespace FastFood.MVC.ViewModels
 {
     public class UserViewModel
     {
+        [Display(Name = "STT")]
         public int Index { get; set; }
 
         [Required]
@@ -14,23 +15,28 @@ namespace FastFood.MVC.ViewModels
 
         [Required]
         [DataType(DataType.PhoneNumber)]
-        [Display(Name = "Phone number")]
+        [Display(Name = "Số điện thoại")]
         public string PhoneNumber { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [Required(ErrorMessage = "The passsword is required.")]
+        [StringLength(100, ErrorMessage = "The password must be at least 6 and at max 100 characters long.")]
         [DataType(DataType.Password)]
-        [Display(Name = "Password")]
+        [Display(Name = "Mật khẩu")]
         public string Password { get; set; } = string.Empty;
 
+        [StringLength(100, ErrorMessage = "The password must be at least 6 and at max 100 characters long.")]
+        [Display(Name = "Mật khẩu mới (Nếu muốn thay đổi)")]
+        [DataType(DataType.Password)]
+        public string? NewPassword { get; set; }
+
         [Required]
-        [Display(Name = "Role")]
+        [Display(Name = "Vai trò")]
         public string RoleName { get; set; } = string.Empty;
 
         public SelectList Roles { get; set; } = new SelectList(new List<SelectListItem>
            {
-               new SelectListItem { Text = "Customer", Value = "Customer" },
-               new SelectListItem { Text = "Employee", Value = "Employee" },
+               new SelectListItem { Text = "Khách hàng", Value = "Customer" },
+               new SelectListItem { Text = "Nhân viên", Value = "Employee" },
                new SelectListItem { Text = "Shipper", Value = "Shipper" }
            }, "Value", "Text");
     }
