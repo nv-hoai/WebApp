@@ -41,6 +41,7 @@ namespace FastFood.MVC.Controllers
 
             var top4Promotion = await _context.Promotions
                 .Where(p => p.StartDate <= DateTime.Now && p.ExpiryDate > DateTime.Now)
+                .OrderByDescending(p => p.PromotionID)
                 .Take(4)
                 .ToListAsync();
 
@@ -55,6 +56,23 @@ namespace FastFood.MVC.Controllers
         public IActionResult Privacy()
         {
             return View();
+        }
+
+        public IActionResult Contact()
+        {
+            MessageViewModel model = new MessageViewModel();
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Contact(MessageViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                return RedirectToAction("Index");
+            }
+            return View(model);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

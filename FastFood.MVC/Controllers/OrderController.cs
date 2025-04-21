@@ -29,7 +29,7 @@ namespace FastFood.MVC.Controllers
                     .Include(o => o.Employee)
                     .Include(o => o.Shipper)
                     .ToListAsync();
-                return View(managementOrders);
+                return View(managementOrders.AsEnumerable());
             }
 
             var customerOrders = await _context.Orders
@@ -37,7 +37,7 @@ namespace FastFood.MVC.Controllers
                 .Where(o => o.Customer.UserID == User.FindFirstValue(ClaimTypes.NameIdentifier))
                 .ToListAsync();
 
-            return View(customerOrders);
+            return View(customerOrders.AsEnumerable());
         }
 
         public async Task<IActionResult> Details(int? id)

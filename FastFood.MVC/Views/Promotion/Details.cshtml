@@ -5,10 +5,8 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Details</h1>
-
 <div>
-    <h4>Promotion</h4>
+    <h4>Chi tiết khuyến mãi</h4>
     <hr />
     <dl class="row">
         <dt class="col-sm-2">
@@ -20,7 +18,7 @@
         @if (Model.ProductID != null)
         {
             <dt class="col-sm-2">
-                Product
+                Sản phẩm được áp dụng
             </dt>
             <dd class="col-sm-10">
                 @Model.Product?.Name
@@ -29,7 +27,7 @@
         else
         {
             <dt class="col-sm-2">
-                Category
+                Danh mục được áp dụng
             </dt>
             <dd class="col-sm-10">
                 @Model.Category?.Name
@@ -63,6 +61,6 @@
 </div>
 <br />
 <div>
-	<partial name="_EditPartial" model="Model" />
-    <a class="btn btn-info" asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model?.PromotionID">Sửa</a> |
+    <a asp-action="Index" >Quay lại</a>
 </div>

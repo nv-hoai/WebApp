@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FastFood.MVC.Controllers
 {
     [Authorize(Policy = "AdminAccess")]
+    [Route("Admin/Management")]
     public class AdminController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -37,6 +39,7 @@ namespace FastFood.MVC.Controllers
             _context = context;
         }
 
+        [Route("Accounts")]
         public async Task<IActionResult> Index()
         {
             var users = await _context.UserRoles
@@ -59,12 +62,13 @@ namespace FastFood.MVC.Controllers
                     PhoneNumber = user.PhoneNumber!,
                     RoleName = user.Name!
                 })
-                .ToList();
+                .AsEnumerable();
 
             return View(model);
         }
 
         [HttpPost]
+        [Route("Accounts/Register")]
         public async Task<IActionResult> Register(UserViewModel model)
         {
             if (ModelState.IsValid)
@@ -83,13 +87,31 @@ namespace FastFood.MVC.Controllers
 
                     await _userManager.AddToRoleAsync(user, model.RoleName);
 
-                    var customer = new Customer
+                    switch(model.RoleName)
                     {
-                        UserID = user.Id,
-                        User = user,
-                    };
+                        case "Customer":
+                            var customer = new Customer
+                            {
+                                UserID = user.Id,
+                            };
+                            _context.Customers.Add(customer);
+                            break;
+                        case "Employee":
+                            var employee = new Employee
+                            {
+                                UserID = user.Id,
+                            };
+                            _context.Employees.Add(employee);
+                            break;
+                        case "Shipper":
+                            var shipper = new Shipper
+                            {
+                                UserID = user.Id,
+                            };
+                            _context.Shippers.Add(shipper);
+                            break;
+                    }
 
-                    _context.Customers.Add(customer);
                     await _context.SaveChangesAsync();
                     return Json(new { success = true });
                 }
@@ -106,6 +128,7 @@ namespace FastFood.MVC.Controllers
         }
 
         [HttpGet]
+        [Route("Accounts/Edit")]
         public async Task<IActionResult> Edit(string email)
         {
             var user = await _context.UserRoles
@@ -124,6 +147,7 @@ namespace FastFood.MVC.Controllers
         }
 
         [HttpPost]
+        [Route("Accounts/Edit")]
         public async Task<IActionResult> Edit(string oldEmail, UserViewModel model)
         {
             var user = await _userManager.FindByEmailAsync(oldEmail);
@@ -142,27 +166,90 @@ namespace FastFood.MVC.Controllers
                     await _userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
                     await _emailStore.SetEmailAsync(user, model.Email, CancellationToken.None);
                 }
+
                 if (model.PhoneNumber != user.PhoneNumber)
                     user.PhoneNumber = model.PhoneNumber;
 
-                
                 var currentRoles = await _userManager.GetRolesAsync(user);
+
                 if (!currentRoles.Contains(model.RoleName))
                 {
                     await _userManager.RemoveFromRolesAsync(user, currentRoles);
                     await _userManager.AddToRoleAsync(user, model.RoleName);
+                    var oldRole = currentRoles.FirstOrDefault();
+                    switch(oldRole)
+                    {
+                        case "Customer":
+                            var customer = await _context.Customers.FirstOrDefaultAsync(x => x.UserID == user.Id);
+                            if (customer != null) _context.Customers.Remove(customer);
+                            break;
+                        case "Employee":
+                            var employee = await _context.Employees.FirstOrDefaultAsync(x => x.UserID == user.Id);
+                            if (employee != null) _context.Employees.Remove(employee);
+                            break;
+                        case "Shipper":
+                            var shipper = await _context.Shippers.FirstOrDefaultAsync(x => x.UserID == user.Id);
+                            if (shipper != null) _context.Shippers.Remove(shipper);
+                            break;
+                    }
+                    switch (model.RoleName)
+                    {
+                        case "Customer":
+                            var customer = new Customer
+                            {
+                                UserID = user.Id,
+                            };
+                            _context.Customers.Add(customer);
+                            break;
+                        case "Employee":
+                            var employee = new Employee
+                            {
+                                UserID = user.Id,
+                            };
+                            _context.Employees.Add(employee);
+                            break;
+                        case "Shipper":
+                            var shipper = new Shipper
+                            {
+                                UserID = user.Id,
+                            };
+                            _context.Shippers.Add(shipper);
+                            break;
+                    }
+                    await _context.SaveChangesAsync();
                 }
 
-                var result = await _userManager.UpdateAsync(user);
+                bool changePassword = true;
 
-                if (result.Succeeded)
+                if (!model.NewPassword.IsNullOrEmpty())
+                {
+                    changePassword = false;
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    var result1 = await _userManager.ResetPasswordAsync(user, token, model.NewPassword!);
+
+                    if (result1.Succeeded)
+                    {
+                        changePassword = true;
+                    }
+                    else
+                    {
+                        foreach (var error in result1.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                    }
+                }
+
+                var result2 = await _userManager.UpdateAsync(user);
+
+                if (changePassword && result2.Succeeded)
                 {
                     _logger.LogInformation("User updated their profile successfully.");
                     return RedirectToAction("Index");
                 }
-                else
+                else if (!result2.Succeeded)
                 {
-                    foreach (var error in result.Errors)
+                    foreach (var error in result2.Errors)
                     {
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
@@ -172,6 +259,7 @@ namespace FastFood.MVC.Controllers
         }
 
         [HttpPost]
+        [Route("Accounts/Delete")]
         public async Task<IActionResult> Delete(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);

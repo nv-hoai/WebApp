@@ -17,7 +17,7 @@ namespace FastFood.MVC.Data
 
                 await SeedRoles(roleManager);
                 await SeedAdminUser(userManager, context, adminEmail, adminPassword);
-                await SeedDataProduct(context);
+                await SeedProduct(context);
                 await SeedPromotion(context);
             }
         }
@@ -89,7 +89,7 @@ namespace FastFood.MVC.Data
             }
         }
 
-        public static async Task SeedDataProduct(ApplicationDbContext context)
+        public static async Task SeedProduct(ApplicationDbContext context)
         {
             if (!context.Categories.Any())
             {
