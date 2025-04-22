@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FastFood.MVC.Data;
@@ -24,24 +20,43 @@ namespace FastFood.MVC.Controllers
             _blobService = blobService;
         }
 
-        public async Task<IActionResult> Index(string? category)
+        public async Task<IActionResult> Index(string? category, string? productName, string? priceSort)
         {
-            List<Product> products;
+            var categories = await _context.Categories.ToListAsync();
+            ViewData["Category"] = new SelectList(categories, "Name", "Name", category);
 
-            if (category == null) 
+            var query = _context.Products
+                .Include(p => p.Category)
+                .Where(p => !p.IsCarouselItem)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(category))
             {
-                products = await _context.Products
-                    .Include(p => p.Category)
-                    .ToListAsync();
-                return View(products);
+                query = query.Where(p => p.Category.Name == category);
             }
 
-            products = await _context.Products
-                .Where(p => !p.IsCarouselItem)
-                .Include(p => p.Category)
-                .Where(products => products.Category.Name == category)
-                .ToListAsync();
-            return View(products);
+            if (!string.IsNullOrEmpty(productName))
+            {
+                query = query.Where(p => p.Name.Contains(productName));
+            }
+
+            switch (priceSort)
+            {
+                case "asc":
+                    query = query.OrderBy(p => p.Price);
+                    break;
+                case "desc":
+                    query = query.OrderByDescending(p => p.Price);
+                    break;
+                default:
+                    query = query.OrderBy(p => p.Name);
+                    break;
+            }
+
+            var products = await query.ToListAsync();
+            var model = new ProductIndexViewModel(categories, products.AsEnumerable());
+
+            return View(model);
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -66,14 +81,14 @@ namespace FastFood.MVC.Controllers
         public IActionResult Create()
         {
             ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name");
-            ProductViewModel model = new ProductViewModel();
+            ProductCreateViewModel model = new ProductCreateViewModel();
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Create(ProductViewModel model)
+        public async Task<IActionResult> Create(ProductCreateViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -121,7 +136,7 @@ namespace FastFood.MVC.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Edit(int id, ProductViewModel product)
+        public async Task<IActionResult> Edit(int id, Product product)
         {
             if (id != product.ProductID)
             {

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FastFood.MVC.ViewModels
 {
-    public class ProductViewModel
+    public class ProductCreateViewModel
     {
         public int ProductID { get; set; }
         public int CategoryID { get; set; }
