@@ -1,0 +1,13 @@
+﻿@{
+    Layout = "_Layout.cshtml";
+}
+
+<div class="container-fluid py-6 mt-5">
+    <div class="container">
+        @RenderBody()
+    </div>
+</div>
+
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}

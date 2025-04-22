@@ -1,32 +1,63 @@
-﻿@*
-@model IEnumerable<FastFood.MVC.Models.Product>
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model FastFood.MVC.ViewModels.ProductIndexViewModel
 
 @{
-    ViewData["Title"] = "Thực đơn";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = "_Layout.cshtml";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="mb-0">@ViewData["Title"]</h1>
-    <a asp-action="Create" class="btn btn-success">
-        <i class="bi bi-plus-circle me-1"></i> Tạo mới
-    </a>
-</div>
+<!-- Page Header End -->
+@if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th>@Html.DisplayNameFor(model => model.Category.Name)</th>
-                <th>@Html.DisplayNameFor(model => model.Name)</th>
-                <th>@Html.DisplayNameFor(model => model.Description)</th>
-                <th>@Html.DisplayNameFor(model => model.Price)</th>
-                <th>@Html.DisplayNameFor(model => model.SoldQuantity)</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
+    <h1 class="display-5 mb-4">Danh sách sản phẩm</h1>
+    <hr />
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <form method="get" asp-action="Index" asp-controller="Product">
+            <div class="d-flex align-items-center gap-3">
+                <div class="input-group" style="width: 300px;">
+                    <input type="text" class="form-control" placeholder="Tìm kiếm theo tên..." name="productName" value="@Context.Request.Query["productName"]">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <select asp-items="ViewBag.Category" class="form-select" name="category" style="width: 200px;">
+                    <option value="">Tất cả danh mục</option>
+                </select>
+                <select class="form-select" name="priceSort" style="width: 200px;">
+                    <option value="">Sắp xếp giá</option>
+                    <option value="asc" selected="@(Context.Request.Query["priceSort"] == "asc")">
+                        Giá: Thấp đến cao
+                    </option>
+                    <option value="desc" selected="@(Context.Request.Query["priceSort"] == "desc")">
+                        Giá: Cao đến thấp
+                    </option>
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-filter"></i> Lọc
+                </button>
+            </div>
+        </form>
+
+        <a asp-action="Create" class="btn btn-success">
+            <i class="bi bi-plus-circle me-1"></i> Tạo mới
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.Products.FirstOrDefault()!.Category.Name)</th>
+                    <th>@Html.DisplayNameFor(model => model.Products.FirstOrDefault()!.Name)</th>
+                    <th>@Html.DisplayNameFor(model => model.Products.FirstOrDefault()!.Description)</th>
+                    <th>@Html.DisplayNameFor(model => model.Products.FirstOrDefault()!.Price)</th>
+                    <th>@Html.DisplayNameFor(model => model.Products.FirstOrDefault()!.SoldQuantity)</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Products)
             {
                 <tr>
                     <td>@Html.DisplayFor(modelItem => item.Category.Name)</td>
@@ -51,178 +82,78 @@
                     </td>
                 </tr>
             }
-        </tbody>
-    </table>
-</div>*@
-@model IEnumerable<FastFood.MVC.Models.Product>
-
-@{
-    ViewData["Title"] = "Thực đơn";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+            </tbody>
+        </table>
+    </div>
 }
+else
+{
+	int itemCount = 0;
 
-<!-- Page Header Start -->
-<div class="container-fluid page-header mb-5 wow fadeIn" data-wow-delay="0.1s">
-    <div class="container">
-        <h1 class="display-3 mb-3 animated slideInDown">Thực đơn</h1>
-        <nav aria-label="breadcrumb animated slideInDown">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a class="text-body" href="#">Trang chủ</a></li>
-                <li class="breadcrumb-item text-dark active" aria-current="page">Thực đơn</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-<!-- Page Header End -->
-<!-- Product Start -->
-<div class="container-xxl py-5">
-    <div class="container">
-        <div class="row g-0 gx-5 align-items-end">
-            <div class="col-lg-6">
-                <div class="section-header text-start mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 500px;">
-                    <h1 class="display-5 mb-3">Thực đơn của Burgz có gì?</h1>
-                    <p>Khám phá thực đơn đa dạng của Burgz với các món ăn hấp dẫn như burger và sandwich thơm ngon, gà rán giòn rụm, khoai tây chiên vàng giòn và những combo đặc biệt dành cho nhóm bạn và gia đình. Mỗi món ăn được chế biến từ nguyên liệu tươi ngon, mang đến trải nghiệm ẩm thực tuyệt vời ngay tại cửa hàng.</p>
-                </div>
-            </div>
-            <div class="col-lg-6 text-start text-lg-end wow slideInRight" data-wow-delay="0.1s">
-                <ul class="nav nav-pills d-inline-flex justify-content-end mb-5">
-                    <li class="nav-item me-1">
-                        <a class="btn btn-outline-primary border-2 active" data-bs-toggle="pill" href="#tab-1">Burgers và Sandwiches</a>
-                    </li>
-                    <li class="nav-item me-1">
-                        <a class="btn btn-outline-primary border-2" data-bs-toggle="pill" href="#tab-2">Gà rán</a>
-                    </li>
-                    <li class="nav-item me-1">
-                        <a class="btn btn-outline-primary border-2" data-bs-toggle="pill" href="#tab-3">Combo</a>
-                    </li>
-                    <li class="nav-item me-1">
-                        <a class="btn btn-outline-primary border-2" data-bs-toggle="pill" href="#tab-4">Đồ uống</a>
-                    </li>
-                </ul>
+    <!-- Product Start -->
+    <div class="row g-0 gx-5 align-items-end">
+        <div class="col-lg-6">
+            <div class="section-header text-start mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 500px;">
+                <h1 class="display-5 mb-3">Thực đơn của Burgz có gì?</h1>
+                <p>Khám phá thực đơn đa dạng của Burgz với các món ăn hấp dẫn như burger và sandwich thơm ngon, gà rán giòn rụm, khoai tây chiên vàng giòn và những combo đặc biệt dành cho nhóm bạn và gia đình. Mỗi món ăn được chế biến từ nguyên liệu tươi ngon, mang đến trải nghiệm ẩm thực tuyệt vời ngay tại cửa hàng.</p>
             </div>
         </div>
-        <div class="tab-content">
-            <div id="tab-1" class="tab-pane fade show p-0 active">
-                <!-- Nội dung cho Burgers và Sandwiches -->
-                <div class="row g-4">
-                    @foreach (var product in Model.Where(p => p.Category.Name == "Burger và Sandwich"))
-                    {
-                        <div class="col-xl-3 col-lg-4 col-md-6">
-                            <div class="product-item">
-                                <div class="position-relative bg-light overflow-hidden">
-                                    <img class="img-fluid w-100" src="@product.ImageUrl" alt="@product.Name">
-                                    @if (product.IsNew)
-                                    {
-                                        <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
-                                    }
-                                </div>
-                                <div class="text-center p-4">
-                                    <a class="d-block h5 mb-2" href="#">@product.Name</a>
-                                    <span class="text-primary me-1">@product.Price.ToString("C")</span>
-                                </div>
-                                <div class="d-flex border-top">
-                                    <small class="w-50 text-center border-end py-2">
-                                        <a class="text-body" href="#">Thêm vào giỏ hàng</a>
-                                    </small>
-                                    <small class="w-50 text-center py-2">
-                                        <a class="text-body" href="#">Đặt ngay</a>
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-            <div id="tab-2" class="tab-pane fade p-0">
-                <div class="row g-4">
-                    @foreach (var product in Model.Where(p => p.Category.Name == "Gà rán"))
-                    {
-                        <div class="col-xl-3 col-lg-4 col-md-6">
-                            <div class="product-item">
-                                <div class="position-relative bg-light overflow-hidden">
-                                    <img class="img-fluid w-100" src="@product.ImageUrl" alt="@product.Name">
-                                    @if (product.IsNew)
-                                    {
-                                        <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
-                                    }
-                                </div>
-                                <div class="text-center p-4">
-                                    <a class="d-block h5 mb-2" href="#">@product.Name</a>
-                                    <span class="text-primary me-1">@product.Price.ToString("C")</span>
-                                </div>
-                                <div class="d-flex border-top">
-                                    <small class="w-50 text-center border-end py-2">
-                                        <a class="text-body" href="#">Thêm vào giỏ hàng</a>
-                                    </small>
-                                    <small class="w-50 text-center py-2">
-                                        <a class="text-body" href="#">Đặt ngay</a>
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-            <div id="tab-3" class="tab-pane fade p-0">
-                <div class="row g-4">
-                    @foreach (var product in Model.Where(p => p.Category.Name == "Combo"))
-                    {
-                        <div class="col-xl-3 col-lg-4 col-md-6">
-                            <div class="product-item">
-                                <div class="position-relative bg-light overflow-hidden">
-                                    <img class="img-fluid w-100" src="@product.ImageUrl" alt="@product.Name">
-                                    @if (product.IsNew)
-                                    {
-                                        <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
-                                    }
-                                </div>
-                                <div class="text-center p-4">
-                                    <a class="d-block h5 mb-2" href="#">@product.Name</a>
-                                    <span class="text-primary me-1">@product.Price.ToString("C")</span>
-                                </div>
-                                <div class="d-flex border-top">
-                                    <small class="w-50 text-center border-end py-2">
-                                        <a class="text-body" href="#">Thêm vào giỏ hàng</a>
-                                    </small>
-                                    <small class="w-50 text-center py-2">
-                                        <a class="text-body" href="#">Đặt ngay</a>
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-            <div id="tab-4" class="tab-pane fade p-0">
-                <div class="row g-4">
-                    @foreach (var product in Model.Where(p => p.Category.Name == "Đồ uống"))
-                    {
-                        <div class="col-xl-3 col-lg-4 col-md-6">
-                            <div class="product-item">
-                                <div class="position-relative bg-light overflow-hidden">
-                                    <img class="img-fluid w-100" src="@product.ImageUrl" alt="@product.Name">
-                                    @if (product.IsNew)
-                                    {
-                                        <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
-                                    }
-                                </div>
-                                <div class="text-center p-4">
-                                    <a class="d-block h5 mb-2" href="#">@product.Name</a>
-                                    <span class="text-primary me-1">@product.Price.ToString("C")</span>
-                                </div>
-                                <div class="d-flex border-top">
-                                    <small class="w-50 text-center border-end py-2">
-                                        <a class="text-body" href="#">Thêm vào giỏ hàng</a>
-                                    </small>
-                                    <small class="w-50 text-center py-2">
-                                        <a class="text-body" href="#">Đặt ngay</a>
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
+        <div class="col-lg-6 text-start text-lg-end wow slideInRight" data-wow-delay="0.1s">
+            <ul class="nav nav-pills d-inline-flex justify-content-end mb-5">
+            @for (int c = 1; c <= Model.Categories.Count; c++)
+            {
+                <li class="nav-item me-1">
+                    <a class="btn btn-outline-primary border-2 @(c == 1 ? "active" : "")"
+                        data-bs-toggle="pill" href="#tab-@c">@Model.Categories[c - 1].Name</a>
+                </li>
+            }
+            </ul>
         </div>
     </div>
-</div>
+    <div class="tab-content">
+    @for (int c = 1; c <= Model.Categories.Count; c++)
+    {
+        itemCount = 0;
+        <div id="tab-@c" class="tab-pane fade show p-0 @(c == 1 ? "active" : "")">
+            <div class="row g-4">
+            @foreach (var product in Model.Products)
+            {
+                if (product.CategoryID == c)
+                {
+                    itemCount++;
+                    <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.@(2 * itemCount - 1)s">
+                        <div class="product-item">
+                            <div class="position-relative bg-light overflow-hidden">
+                                <img class="img-fluid w-100" src="@product.ImageUrl" alt="">
+                                @if (product.IsNew)
+                                {
+                                    <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
+                                }
+                                @if (product.IsPopular)
+                                {
+                                    <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">Hot</div>
+                                }
+                            </div>
+                            <div class="text-center p-4">
+                                <a class="d-block h5 mb-2" asp-controller="Product"
+                                    asp-action="Details" asp-route-id="@product.ProductID">@product.Name</a>
+                                <p class="text-body">@product.Description</p>
+                                <span class="text-primary me-1">@product.Price VND</span>
+                            </div>
+                            <div class="d-flex border-top">
+                                <small class="w-50 text-center border-end py-2">
+                                    <a class="text-body" asp-controller="Order" asp-action="Index">Đặt ngay</a>
+                                </small>
+                                <small class="w-50 text-center py-2">
+                                    <a class="text-body" asp-controller="Order" asp-action="Index">Thêm vào giỏ</a>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            </div>
+        </div>
+    }
+    </div>
+    }
