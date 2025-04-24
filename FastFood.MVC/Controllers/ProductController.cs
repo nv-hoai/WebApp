@@ -20,7 +20,7 @@ namespace FastFood.MVC.Controllers
             _blobService = blobService;
         }
 
-        public async Task<IActionResult> Index(string? category, string? productName, string? priceSort)
+        public async Task<IActionResult> Index(string? category, string? productName, string? priceSort, int? activeIndex)
         {
             var categories = await _context.Categories.ToListAsync();
             ViewData["Category"] = new SelectList(categories, "Name", "Name", category);
@@ -55,6 +55,7 @@ namespace FastFood.MVC.Controllers
 
             var products = await query.ToListAsync();
             var model = new ProductIndexViewModel(categories, products.AsEnumerable());
+            ViewData["activeIndex"] = activeIndex ?? 0;
 
             return View(model);
         }
