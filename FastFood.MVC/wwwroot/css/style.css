@@ -199,15 +199,23 @@
 .page-header {
     padding-top: 12rem;
     padding-bottom: 6rem;
-    background: url(../img/carousel.jpg) top right no-repeat;
+    background: url(../img/page-header-bg.jpg) top right no-repeat;
     background-size: cover;
+}
+.page-header p{
+    color: var(--dark);
+}
+.form-wrapper {
+    justify-content: center;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .breadcrumb-item+.breadcrumb-item::before {
     color: #999999;
 }
-
-
 /*** Section Header ***/
 .section-header {
     position: relative;
@@ -241,8 +249,6 @@
     left: 0;
     transform: translateX(0);
 }
-
-
 
 /*** About ***/
 .about-img img {
