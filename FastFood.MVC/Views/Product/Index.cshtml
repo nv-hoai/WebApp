@@ -89,65 +89,25 @@ else
 {
     int itemCount = 0;
     <div class="col-lg-6 text-start text-lg-end wow slideInRight" data-wow-delay="0.1s">
-        <ul class="nav nav-pills d-inline-flex justify-content-end mb-5">
-            <li class="nav-item me-1">
-                <a class="btn btn-outline-primary border-2 active" data-bs-toggle="pill" href="#tab-0">Tất cả</a>
-            </li>
-            @for (int c = 1; c <= Model.Categories.Count; c++)
+        <ul class="nav nav-pills mb-5">
+            @for (int c = 0; c <= Model.Categories.Count; c++)
             {
                 <li class="nav-item me-1">
-                    <a class="btn btn-outline-primary border-2"
-                       data-bs-toggle="pill" href="#tab-@c">@Model.Categories[c - 1].Name</a>
+                    <a class="btn btn-outline-primary border-2 @(c == ViewBag.activeIndex ? "active" : "")"
+                       data-bs-toggle="pill" href="#tab-@c">@(c == 0? "Tất cả": Model.Categories[c-1].Name)</a>
                 </li>
             }
         </ul>
     </div>
     <div class="tab-content">
-        <div id="tab-0" class="tab-pane fade show active p-0">
-            <div class="row g-4">
-                @foreach (var product in Model.Products)
-                {
-                    itemCount++;
-                    <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.@(2 * itemCount - 1)s">
-                        <div class="product-item">
-                            <div class="position-relative bg-light overflow-hidden">
-                                <img class="img-fluid w-100" src="@product.ImageUrl" alt="">
-                                @if (product.IsNew)
-                                {
-                                    <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
-                                }
-                                @if (product.IsPopular)
-                                {
-                                    <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">Best seller</div>
-                                }
-                            </div>
-                            <div class="text-center p-4">
-                                <a class="d-block h5 mb-2" asp-controller="Product"
-                                   asp-action="Details" asp-route-id="@product.ProductID">@product.Name</a>
-                                <p class="text-body">@product.Description</p>
-                                <span class="text-primary me-1">@product.Price VND</span>
-                            </div>
-                            <div class="d-flex border-top">
-                                <small class="w-50 text-center border-end py-2">
-                                    <a class="text-body" asp-controller="Order" asp-action="Index">Đặt ngay</a>
-                                </small>
-                                <small class="w-50 text-center py-2">
-                                    <a class="text-body" asp-controller="Order" asp-action="Index">Thêm vào giỏ</a>
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-        @for (int c = 1; c <= Model.Categories.Count; c++)
+        @for (int c = 0; c <= Model.Categories.Count; c++)
         {
             itemCount = 0;
-            <div id="tab-@c" class="tab-pane fade show p-0">
+            <div id="tab-@c" class="tab-pane fade show p-0 @(c == ViewBag.activeIndex ? "active" : "")">
                 <div class="row g-4">
                     @foreach (var product in Model.Products)
                     {
-                        if (product.CategoryID == c)
+                        if (c == 0 || product.CategoryID == c)
                         {
                             itemCount++;
                             <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.@(2 * itemCount - 1)s">
