@@ -6,7 +6,6 @@
     Layout = "_Layout.cshtml";
 }
 
-<!-- Page Header End -->
 @if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
 {
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -57,68 +56,56 @@
                 </tr>
             </thead>
             <tbody>
-            @foreach (var item in Model.Products)
-            {
-                <tr>
-                    <td>@Html.DisplayFor(modelItem => item.Category.Name)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Name)</td>
-                    <td>
-                        @(item.Description?.Length > 50
-                            ? item.Description.Substring(0, 50) + "..."
-                            : item.Description)
-                    </td>
-                    <td>@Html.DisplayFor(modelItem => item.Price)</td>
-                    <td>@Html.DisplayFor(modelItem => item.SoldQuantity)</td>
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@item.ProductID" class="btn btn-sm btn-warning me-1" title="Sửa">
-                            <i class="bi bi-pencil-square"></i>
-                        </a>
-                        <a asp-action="Details" asp-route-id="@item.ProductID" class="btn btn-sm btn-info me-1 text-white" title="Chi tiết">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a asp-action="Delete" asp-route-id="@item.ProductID" class="btn btn-sm btn-danger" title="Xóa">
-                            <i class="bi bi-trash"></i>
-                        </a>
-                    </td>
-                </tr>
-            }
+                @foreach (var item in Model.Products)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(modelItem => item.Category.Name)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                        <td>
+                            @(item.Description?.Length > 50
+                                    ? item.Description.Substring(0, 50) + "..."
+                                    : item.Description)
+                        </td>
+                        <td>@Html.DisplayFor(modelItem => item.Price)</td>
+                        <td>@Html.DisplayFor(modelItem => item.SoldQuantity)</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.ProductID" class="btn btn-sm btn-warning me-1" title="Sửa">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <a asp-action="Details" asp-route-id="@item.ProductID" class="btn btn-sm btn-info me-1 text-white" title="Chi tiết">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.ProductID" class="btn btn-sm btn-danger" title="Xóa">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
 }
 else
 {
-	int itemCount = 0;
-
-    <!-- Product Start -->
-    <div class="row g-0 gx-5 align-items-end">
-        <div class="col-lg-6">
-            <div class="section-header text-start mb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 500px;">
-                <h1 class="display-5 mb-3">Thực đơn của Burgz có gì?</h1>
-                <p>Khám phá thực đơn đa dạng của Burgz với các món ăn hấp dẫn như burger và sandwich thơm ngon, gà rán giòn rụm, khoai tây chiên vàng giòn và những combo đặc biệt dành cho nhóm bạn và gia đình. Mỗi món ăn được chế biến từ nguyên liệu tươi ngon, mang đến trải nghiệm ẩm thực tuyệt vời ngay tại cửa hàng.</p>
-            </div>
-        </div>
-        <div class="col-lg-6 text-start text-lg-end wow slideInRight" data-wow-delay="0.1s">
-            <ul class="nav nav-pills d-inline-flex justify-content-end mb-5">
+    int itemCount = 0;
+    <div class="col-lg-6 text-start text-lg-end wow slideInRight" data-wow-delay="0.1s">
+        <ul class="nav nav-pills d-inline-flex justify-content-end mb-5">
+            <li class="nav-item me-1">
+                <a class="btn btn-outline-primary border-2 active" data-bs-toggle="pill" href="#tab-0">Tất cả</a>
+            </li>
             @for (int c = 1; c <= Model.Categories.Count; c++)
             {
                 <li class="nav-item me-1">
-                    <a class="btn btn-outline-primary border-2 @(c == 1 ? "active" : "")"
-                        data-bs-toggle="pill" href="#tab-@c">@Model.Categories[c - 1].Name</a>
+                    <a class="btn btn-outline-primary border-2"
+                       data-bs-toggle="pill" href="#tab-@c">@Model.Categories[c - 1].Name</a>
                 </li>
             }
-            </ul>
-        </div>
+        </ul>
     </div>
     <div class="tab-content">
-    @for (int c = 1; c <= Model.Categories.Count; c++)
-    {
-        itemCount = 0;
-        <div id="tab-@c" class="tab-pane fade show p-0 @(c == 1 ? "active" : "")">
+        <div id="tab-0" class="tab-pane fade show active p-0">
             <div class="row g-4">
-            @foreach (var product in Model.Products)
-            {
-                if (product.CategoryID == c)
+                @foreach (var product in Model.Products)
                 {
                     itemCount++;
                     <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.@(2 * itemCount - 1)s">
@@ -131,12 +118,12 @@ else
                                 }
                                 @if (product.IsPopular)
                                 {
-                                    <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">Hot</div>
+                                    <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">Best seller</div>
                                 }
                             </div>
                             <div class="text-center p-4">
                                 <a class="d-block h5 mb-2" asp-controller="Product"
-                                    asp-action="Details" asp-route-id="@product.ProductID">@product.Name</a>
+                                   asp-action="Details" asp-route-id="@product.ProductID">@product.Name</a>
                                 <p class="text-body">@product.Description</p>
                                 <span class="text-primary me-1">@product.Price VND</span>
                             </div>
@@ -151,9 +138,51 @@ else
                         </div>
                     </div>
                 }
-            }
             </div>
         </div>
-    }
+        @for (int c = 1; c <= Model.Categories.Count; c++)
+        {
+            itemCount = 0;
+            <div id="tab-@c" class="tab-pane fade show p-0">
+                <div class="row g-4">
+                    @foreach (var product in Model.Products)
+                    {
+                        if (product.CategoryID == c)
+                        {
+                            itemCount++;
+                            <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.@(2 * itemCount - 1)s">
+                                <div class="product-item">
+                                    <div class="position-relative bg-light overflow-hidden">
+                                        <img class="img-fluid w-100" src="@product.ImageUrl" alt="">
+                                        @if (product.IsNew)
+                                        {
+                                            <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">New</div>
+                                        }
+                                        @if (product.IsPopular)
+                                        {
+                                            <div class="bg-secondary rounded text-white position-absolute start-0 top-0 m-4 py-1 px-3">Hot</div>
+                                        }
+                                    </div>
+                                    <div class="text-center p-4">
+                                        <a class="d-block h5 mb-2" asp-controller="Product"
+                                           asp-action="Details" asp-route-id="@product.ProductID">@product.Name</a>
+                                        <p class="text-body">@product.Description</p>
+                                        <span class="text-primary me-1">@product.Price VND</span>
+                                    </div>
+                                    <div class="d-flex border-top">
+                                        <small class="w-50 text-center border-end py-2">
+                                            <a class="text-body" asp-controller="Order" asp-action="Index">Đặt ngay</a>
+                                        </small>
+                                        <small class="w-50 text-center py-2">
+                                            <a class="text-body" asp-controller="Order" asp-action="Index">Thêm vào giỏ</a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
     </div>
-    }
+}
