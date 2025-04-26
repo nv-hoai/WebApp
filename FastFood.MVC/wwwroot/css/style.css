@@ -395,3 +395,13 @@
 .footer .copyright a:hover {
     color: var(--primary);
 }
+/***Order Page***/
+.orderpage-header {
+    padding-top: 12rem;
+    padding-bottom: 6rem;
+    background: url('../img/orderpage-header.jpg') top right no-repeat;
+    background-size: cover;
+}
+.custom-radius {
+    border-radius: 20px;
+}
