@@ -428,4 +428,46 @@
 .price {
     font-weight: bold;
     color: green;
-}}
+}
+/*Promotion Page*/
+.promotion-header {
+    padding-top: 12rem;
+    padding-bottom: 6rem;
+    background: url('../img/promotionpage-header.jpg') top right no-repeat;
+    background-size: cover;
+}
+.coupon-card {
+    min-width: 280px;
+    min-height: 310px;
+    background: linear-gradient(135deg,#f5f3dd, #c04b2c);
+    color: #fff;
+    text-align: center;
+    justify-content: center;
+    padding: 40px 80px;
+    border-radius: 15px;
+    box-shadow: 0 15px 10px 0 rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+.coupon-card h3{
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 40px;
+}
+.coupon-card p{
+    font-size: 15px;
+}
+.circle1, .circle2 {
+    background: #f7f8fc;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translateY(50%);
+}
+.circle1 {
+    left: -25px;
+}
+.circle2 {
+    right: -25px;
+}
