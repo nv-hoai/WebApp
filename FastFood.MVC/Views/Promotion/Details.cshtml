@@ -1,4 +1,6 @@
-﻿@model FastFood.MVC.Models.Promotion
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model FastFood.MVC.Models.Promotion
 
 @{
     Layout = "_Layout.cshtml";
@@ -60,6 +62,10 @@
 </div>
 <br />
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.PromotionID">Sửa</a> |
-    <a asp-action="Index" >Quay lại</a>
+    @if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+    {
+        <button class="btn btn-warning" onclick="location.href='@Url.Action("Edit", "Promotion", new { id = Model.PromotionID })'">Sửa</button>
+    }
+
+    <button class="btn btn-secondary" onclick="location.href='@Url.Action("Index", "Promotion")'">Quay lại</button>
 </div>
