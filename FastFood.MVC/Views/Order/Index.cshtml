@@ -1,72 +1,37 @@
-﻿@model IEnumerable<FastFood.MVC.Models.Order>
-
-@{
-    ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+﻿@{
+    Layout = "_Layout.cshtml";
 }
+<div class="container mt-1">
+    <div class="row">
+        <div class="text-lg-start mt-2 mb-1">
+            <div style="display: inline-flex; align-items: center;">
+                <i class="fa-solid fa-location-dot" style="margin-right: 8px;"></i> 
+                <h4>Địa chỉ nhận hàng</h4>
+            </div>
+        </div>
+    </div>
+    <form>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <select class="form-select custom-radius" id="tinhThanh">
+                        <option selected>Chọn Tỉnh / Thành</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <select class="form-select custom-radius" id="quanHuyen">
+                        <option selected>Chọn Xã/Phường</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <input type="text" class="form-control custom-radius" id="diaChi" placeholder="Nhập địa chỉ">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Customer)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Shipper)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Employee)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TotalCharge)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CompletedAt)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Customer.CustomerID)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Shipper.ShipperID)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Employee.EmployeeID)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TotalCharge)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CompletedAt)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.OrderID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.OrderID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.OrderID">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
