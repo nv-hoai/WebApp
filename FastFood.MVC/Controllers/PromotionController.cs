@@ -10,6 +10,7 @@ using FastFood.MVC.Models;
 using FastFood.MVC.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using FastFood.MVC.Services;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FastFood.MVC.Controllers
 {
@@ -24,9 +25,32 @@ namespace FastFood.MVC.Controllers
             _blobService = blobService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? promotion, string? discountPercentSort)
         {
-            return View(await _context.Promotions.ToListAsync());
+            var query = _context.Promotions
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(promotion))
+            {
+                query = query.Where(p => p.Name.Contains(promotion));
+            }
+
+            switch (discountPercentSort)
+            {
+                case "asc":
+                    query = query.OrderBy(p => p.DiscountPercent);
+                    break;
+                case "desc":
+                    query = query.OrderByDescending(p => p.DiscountPercent);
+                    break;
+                default:
+                    query = query.OrderBy(p => p.Name);
+                    break;
+            }
+
+            var promotions = await query.ToListAsync();
+
+            return View(promotions);
         }
 
         public async Task<IActionResult> Details(int? id)
