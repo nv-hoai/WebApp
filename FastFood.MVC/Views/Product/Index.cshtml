@@ -134,7 +134,10 @@ else
                                             <a class="text-body" asp-controller="Order" asp-action="Index">Đặt ngay</a>
                                         </small>
                                         <small class="w-50 text-center py-2">
-                                            <a class="text-body" asp-controller="Order" asp-action="Index">Thêm vào giỏ</a>
+                                            <form method="post" asp-controller="Cart" asp-action="AddToCart">
+                                                <input type="hidden" name="productID" value="@product.ProductID" />
+                                                <button type="submit" class="btn btn-link text-body">Thêm vào giỏ</button>
+                                            </form>
                                         </small>
                                     </div>
                                 </div>

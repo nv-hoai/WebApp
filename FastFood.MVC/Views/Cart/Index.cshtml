@@ -1,0 +1,50 @@
+﻿@model List<CartItem>
+
+<div class="container mt-1">
+    <div class="row">
+        <div class="text-lg-start mt-2 mb-1">
+            <div style="display: inline-flex; align-items: center;">
+                <i class="fa-solid fa-cart-shopping" style="margin-right: 8px;"></i>
+                <h4>Chi tiết đơn hàng</h4>
+            </div>
+        </div>
+    </div>
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Tên sản phẩm</th>
+                <th scope="col">Số lượng</th>
+                <th scope="col">Đơn giá</th>
+                <th scope="col">Thành tiền</th>
+                <th scope="col">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id="cartItems">
+            <!-- Xử lý phần thông tin món ăn ở đây -->
+            @foreach (var item in Model) 
+            {
+                <tr>
+                    <td>@item.ProductName</td>
+                    <td>
+                        <form method="post" asp-controller="Cart" asp-action="UpdateCart">
+                            <input type="hidden" name="productID" value="@item.ProductID" />
+                            <button type="submit" name="quantity" value="@Math.Max(1, item.Quantity - 1)" class="btn btn-link btn-sm">-</button>
+                            <span>@item.Quantity</span>
+                            <button type="submit" name="quantity" value="@item.Quantity + 1" class="btn btn-link btn-sm">+</button>
+                        </form>
+                    </td>
+                    <td>@item.Price.ToString("N0") VND</td>
+                    <td>@item.CalculateSubTotal().ToString("N0") VND</td>
+                    <td>
+                        <a href="/Cart/RemoveFromCart/@item.ProductID">Xóa</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-primary" id="checkoutBtn">Thanh toán</button> <!--chưa-->
+        <a class="btn btn-secondary" href="/Cart/ClearCart">Xóa giỏ hàng</a> 
+    </div>
+</div>
