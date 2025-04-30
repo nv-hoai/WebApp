@@ -105,6 +105,10 @@ namespace FastFood.MVC.Controllers
             {
                 cart.Remove(item);
             }
+            else
+            {
+                TempData["CartError"] = "Sản phẩm không tồn tại trong giỏ hàng.";
+            }
             SaveCart(cart);
             return RedirectToAction("Index");
         }
@@ -121,7 +125,11 @@ namespace FastFood.MVC.Controllers
                 if (quantity <= 0)
                     cart.Remove(item);
                 else
-                    item.Quantity = quantity;
+                    item.Quantity = Math.Max(0, quantity);
+            }
+            else
+            {
+                TempData["CartError"] = "Sản phẩm không tồn tại trong giỏ hàng.";
             }
             SaveCart(cart);
             return RedirectToAction("Index");
@@ -131,7 +139,7 @@ namespace FastFood.MVC.Controllers
         public async Task<IActionResult> ClearCart()
         {
             SaveCart(new List<CartItem>());
-            return RedirectToAction("Index");
+            return Json(new { success = true });
         }
     }
 }
