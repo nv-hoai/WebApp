@@ -134,7 +134,7 @@ else
                                             <a class="text-body" asp-controller="Order" asp-action="Index">Đặt ngay</a>
                                         </small>
                                         <small class="w-50 text-center py-2">
-                                            <a class="text-body" asp-controller="Order" asp-action="Index">Thêm vào giỏ</a>
+                                            <button onclick="addToCart(@product.ProductID)" class="btn btn-link text-body">Thêm vào giỏ</button>
                                         </small>
                                     </div>
                                 </div>
@@ -146,3 +146,41 @@ else
         }
     </div>
 }
+@Html.AntiForgeryToken()
+
+<script>
+    function addToCart(productID, quantity = 1) {
+        const token = $('input[name="__RequestVerificationToken"]').val();
+
+        $.ajax({
+            type: "POST",
+            url: '/Cart/AddToCart',
+            data: {
+                productID: productID,
+                quantity: quantity,
+                __RequestVerificationToken: token
+            },
+            success: function (response) {
+                console.log(response); 
+
+                if (response.redirectUrl) {
+                    window.location.href = response.redirectUrl;
+                    return;
+                }
+
+                if (response.success) {
+                    alert(response.message || "Đã thêm vào giỏ hàng!");
+                    if (typeof updateCartBadge === "function") {
+                        updateCartBadge(); 
+                    }
+                } else {
+                    alert(response.message || "Đã xảy ra lỗi.");
+                }
+            },
+            error: function () {
+                alert("Lỗi khi thêm vào giỏ hàng.");
+            }
+        });
+    }
+</script>
+
