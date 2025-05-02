@@ -38,7 +38,6 @@ namespace FastFood.MVC.Controllers
             _emailSender = emailSender;
             _context = context;
         }
-
         [Route("Accounts")]
         public async Task<IActionResult> Index()
         {
@@ -66,7 +65,10 @@ namespace FastFood.MVC.Controllers
 
             return View(model);
         }
-
+        public IActionResult Dashboard()
+        {
+            return View(); 
+        }
         [HttpPost]
         [Route("Accounts/Register")]
         public async Task<IActionResult> Register(UserViewModel model)

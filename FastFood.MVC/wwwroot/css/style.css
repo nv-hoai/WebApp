@@ -523,3 +523,7 @@
     font-size: 10px;
     color: #6c757d;
 }
+/*Admin Page*/
+.sidebar {
+    min-height: 100vh;
+}
