@@ -523,6 +523,41 @@
     font-size: 10px;
     color: #6c757d;
 }
+/*Cart Page*/
+.cart-header {
+    display: inline-flex;
+    align-items: center;
+}
+
+.cart-icon {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+.quantity-cell button {
+    font-size: 1.2rem;
+    color: #007bff;
+    padding: 0 5px;
+}
+
+.quantity-cell .item-quantity {
+    margin: 0 10px;
+    font-weight: 500;
+}
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: red;
+    color: white;
+    font-size: 12px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 50%;
+    font-weight: bold;
+}
 /*Admin Page*/
 .sidebar {
     min-height: 100vh;

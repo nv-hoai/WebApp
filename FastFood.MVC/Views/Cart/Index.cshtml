@@ -6,12 +6,13 @@ Layout = "_Layout.cshtml";
 <div class="container mt-1">
     <div class="row">
         <div class="text-lg-start mt-2 mb-1">
-            <div style="display: inline-flex; align-items: center;">
-                <i class="fa-solid fa-cart-shopping" style="margin-right: 8px;"></i>
+            <div class="cart-header">
+                <i class="fa-solid fa-cart-shopping cart-icon"></i>
                 <h4>Chi tiết giỏ hàng</h4>
             </div>
         </div>
     </div>
+
     <table class="table table-bordered table-hover">
         <thead>
             <tr>
@@ -23,43 +24,50 @@ Layout = "_Layout.cshtml";
             </tr>
         </thead>
         <tbody id="cartItems">
-            <!-- Xử lý phần thông tin món ăn ở đây -->
             @if (TempData["CartError"] != null)
-        {
-            <tr>
-                <td colspan="5">
-                    <div class="alert alert-danger" role="alert">
-                        @TempData["CartError"]
-                    </div>
-                </td>
-            </tr>
-        }
-        @foreach (var item in Model)
-        {
-            <tr data-product-id="@item.ProductID">
-                <td>@item.ProductName</td>
-                <td class="text-center">
-                    <button type="button" class="btn-decrease btn btn-link btn-lg" style="color:red" data-productid="@item.ProductID">-</button>
-                    <span class="item-quantity">@item.Quantity</span>
-                    <button type="button" class="btn-increase btn btn-link btn-lg" data-productid="@item.ProductID">+</button>
-                </td>
-                <td class="text-end">@((item.Price * 1000).ToString("N0")) VND</td>
-                <td class="item-subtotal text-end">@((item.CalculateSubTotal() * 1000).ToString("N0")) VND</td>
-                <td class="text-center">
-                    <button class="btn-delete text-danger" data-productid="@item.ProductID" style="border: none; background: none;">Xóa</button>
-                </td>
-            </tr>
-        }
+            {
+                <tr>
+                    <td colspan="5">
+                        <div class="alert alert-danger" role="alert">
+                            @TempData["CartError"]
+                        </div>
+                    </td>
+                </tr>
+            }
+
+            @foreach (var item in Model)
+            {
+                <tr data-product-id="@item.ProductID">
+                    <td>@item.ProductName</td>
+                    <td class="text-center quantity-cell">
+                        <button type="button" class="btn-decrease btn btn-link" data-productid="@item.ProductID">
+                            <i class="fa-solid fa-circle-minus"></i>
+                        </button>
+                        <span class="item-quantity">@item.Quantity</span>
+                        <button type="button" class="btn-increase btn btn-link" data-productid="@item.ProductID">
+                            <i class="fa-solid fa-circle-plus"></i>
+                        </button>
+                    </td>
+                    <td class="text-end">@((item.Price * 1000).ToString("N0")) VND</td>
+                    <td class="item-subtotal text-end">@((item.CalculateSubTotal() * 1000).ToString("N0")) VND</td>
+                    <td class="text-center">
+                        <button class="btn-delete text-danger btn btn-link" data-productid="@item.ProductID">
+                            <i class="fa-solid fa-trash"></i> Xóa
+                        </button>
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 
     <h4>Tổng tiền: <span id="totalAmount">@((Model.Sum(m => m.CalculateSubTotal() * 1000)).ToString("N0"))</span> VND</h4>
 
     <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-primary" id="checkoutBtn">Thanh toán</button> <!--chưa-->
+        <button type="button" class="btn btn-primary" id="checkoutBtn">Thanh toán</button>
         <button type="button" class="btn btn-secondary" id="clearCartBtn">Xóa giỏ hàng</button>
     </div>
 </div>
+
 <script>
     $(document).ready(function () {
         // Xử lý tăng/giảm số lượng
@@ -132,7 +140,7 @@ Layout = "_Layout.cshtml";
                 let subtotal = parseInt(subtotalText) || 0;
                 total += subtotal;
             });
-            $('#totalAmount').text(total.toLocaleString('vi-VN') + ' VND');
+            $('#totalAmount').text(total.toLocaleString('vi-VN'));
         }
 
         //Xử lý xóa giỏ hàng
@@ -145,7 +153,7 @@ Layout = "_Layout.cshtml";
                 success: function (response) {
                     if (response.success) {
                         $('#cartItems').empty(); // Xóa toàn bộ dòng sản phẩm
-                        $('#totalAmount').text('0 VND'); // Reset tổng tiền
+                        $('#totalAmount').text('0'); // Reset tổng tiền
                         alert('Giỏ hàng đã được xóa.');
                     }
                 },
