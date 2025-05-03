@@ -95,8 +95,9 @@
                         </ul>
                     </div>
                     @* End login section *@
-                    <a class="btn-sm-square bg-white rounded-circle ms-3" asp-controller="Cart" asp-action="Index">
+                    <a class="btn-sm-square bg-white rounded-circle ms-3 position-relative" asp-controller="Cart" asp-action="Index">
                         <small class="fa fa-shopping-bag text-body"></small>
+                        <span class="cart-badge" id="cartCount">@ViewBag.CartCount</span>
                     </a>
                 </div>
             </div>
