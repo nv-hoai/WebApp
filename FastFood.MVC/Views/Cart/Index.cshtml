@@ -53,7 +53,7 @@ Layout = "_Layout.cshtml";
         </tbody>
     </table>
 
-    <h4>Tổng tiền: <span id="totalAmount">@((Model.Sum(m => m.CalculateSubTotal()) * 1000)).ToString("N0")</span> VND</h4>
+    <h4>Tổng tiền: <span id="totalAmount">@((Model.Sum(m => m.CalculateSubTotal() * 1000)).ToString("N0"))</span> VND</h4>
 
     <div class="d-flex justify-content-between">
         <button type="button" class="btn btn-primary" id="checkoutBtn">Thanh toán</button> <!--chưa-->
