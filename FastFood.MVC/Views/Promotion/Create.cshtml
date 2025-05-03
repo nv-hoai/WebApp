@@ -5,63 +5,67 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<h1>Tạo mới khuyến mãi</h1>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label class="control-label">Sản phẩm được áp dụng</label>
-                <select asp-for="ProductID" class="form-control" asp-items="ViewBag.Product">
-                    <option value="">-- Select a Product --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="control-label">Danh mục được áp dụng</label>
-                <select asp-for="CategoryID" class="form-control" asp-items="ViewBag.Category">
-                    <option value="">-- Select a category --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <textarea asp-for="Description" class="form-control"></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DiscountPercent" class="control-label"></label>
-                <input asp-for="DiscountPercent" class="form-control" />
-                <span asp-validation-for="DiscountPercent" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StartDate" class="control-label"></label>
-                <input asp-for="StartDate" class="form-control" />
-                <span asp-validation-for="StartDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ExpiryDate" class="control-label"></label>
-                <input asp-for="ExpiryDate" class="form-control" />
-                <span asp-validation-for="ExpiryDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RequiredQuantity" class="control-label"></label>
-                <input asp-for="RequiredQuantity" class="form-control" />
-                <span asp-validation-for="RequiredQuantity" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group d-flex justify-content-between">
-                <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
-                <button type="submit" class="btn btn-primary">Tạo</button>
-            </div>
-        </form>
+<div class="form-body">
+    <div class="admincontainer">
+        <div class="adminform-container">
+            <h1>Tạo khuyến mãi</h1>
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="form-group">
+                    <label asp-for="Name" class="control-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Sản phẩm được áp dụng</label>
+                    <select asp-for="ProductID" class="form-control" asp-items="ViewBag.Product">
+                        <option value="">-- Chọn sản phẩm --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Danh mục được áp dụng</label>
+                    <select asp-for="CategoryID" class="form-control" asp-items="ViewBag.Category">
+                        <option value="">-- Chọn danh mục --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Description" class="control-label"></label>
+                    @Html.TextAreaFor(model => model.Description, new { @class = "form-control", rows = 4 })
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="DiscountPercent" class="control-label"></label>
+                    <input asp-for="DiscountPercent" class="form-control" />
+                    <span asp-validation-for="DiscountPercent" class="text-danger"></span>
+                </div>
+                <div class="form-group-date">
+                    <div class="form-date-item">
+                        <label asp-for="StartDate" class="control-label"></label>
+                        <input asp-for="StartDate" class="form-control" />
+                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-date-item">
+                        <label asp-for="ExpiryDate" class="control-label"></label>
+                        <input asp-for="ExpiryDate" class="form-control" />
+                        <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label asp-for="RequiredQuantity" class="control-label"></label>
+                    <input asp-for="RequiredQuantity" class="form-control" />
+                    <span asp-validation-for="RequiredQuantity" class="text-danger"></span>
+                </div>
+                <br />
+                <div class="form-group-btn">
+                    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+                    <button type="reset" class="btn btn-warning">Nhập lại</button>
+                    <button type="submit" class="btn btn-primary">Tạo khuyến mãi</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
