@@ -22,6 +22,7 @@ namespace FastFood.MVC.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -83,7 +84,7 @@ namespace FastFood.MVC.Data
                 o.HasOne(o => o.Employee)
                     .WithMany(e => e.Orders)
                     .HasForeignKey(o => o.EmployeeID)
-                    .OnDelete(DeleteBehavior.NoAction); 
+                    .OnDelete(DeleteBehavior.NoAction);
 
                 o.HasOne(o => o.Shipper)
                     .WithMany(s => s.Orders)
@@ -102,8 +103,8 @@ namespace FastFood.MVC.Data
                     .OnDelete(DeleteBehavior.Cascade); // Delete OrderDetails if Order is deleted
 
                 od.HasOne(od => od.Promotion)
-                    .WithOne(p => p.OrderDetail)
-                    .HasForeignKey<OrderDetail>(od => od.PromotionID)
+                    .WithMany()
+                    .HasForeignKey(od => od.PromotionID)
                     .OnDelete(DeleteBehavior.NoAction); // Promotions are reusable, avoid cascade
             });
 
@@ -147,6 +148,26 @@ namespace FastFood.MVC.Data
                     .WithOne(e => e.Role)
                     .HasForeignKey(rc => rc.RoleId)
                     .IsRequired();
+            });
+
+            modelBuilder.Entity<CartItem>(c =>
+            {
+                c.HasKey(ci => new { ci.CustomerID, ci.ProductID });
+
+                c.HasOne(ci => ci.Customer)
+                    .WithMany(c => c.CartItems)
+                .HasForeignKey(ci => ci.CustomerID)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                c.HasOne(ci => ci.Product)
+                    .WithMany()
+                    .HasForeignKey(ci => ci.ProductID)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                c.HasOne(ci => ci.Promotion)
+                    .WithMany()
+                    .HasForeignKey(ci => ci.PromotionID)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
         }
     }
