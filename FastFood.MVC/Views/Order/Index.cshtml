@@ -1,41 +1,101 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model IEnumerable<FastFood.MVC.Models.Order>
+@{
     Layout = "_Layout.cshtml";
 }
-
-<div class="container mt-4 order-container">
-    <div class="row mb-3">
-        <div class="text-lg-start">
-            <div style="display: inline-flex; align-items: center;">
-                <i class="fa-solid fa-list-check me-2 text-primary"></i>
-                <h4 class="fw-bold mb-0">Danh sách đơn hàng</h4>
+@if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    <h1 class="display-5 mb-4">Quản lý đơn hàng</h1>
+    <hr />
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <form method="get" asp-action="Index" asp-controller="Order">
+            <div class="d-flex align-items-center gap-3">
+                <div class="input-group" style="width: 300px;">
+                    <input type="text" class="form-control" placeholder="Tìm kiếm theo mã đơn hàng..." name="orderId" value="@Context.Request.Query["orderId"]">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <select asp-items="ViewBag.Status" class="form-select" name="status" style="width: 200px;">
+                    <option value="">Tất cả trạng thái</option>
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-filter"></i> Lọc
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã đơn hàng</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Thời gian tạo</th>
+                            <th>Thời gian hoàn tất</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                     <tbody>
+                            @foreach(var item in Model)
+                            {
+                                <tr>
+                                <td>@Html.DisplayFor(Model=>item.OrderID)</td>
+                                <td>@Html.DisplayFor(Model => item.TotalCharge)</td>
+                                <td>
+                                    @Html.DisplayNameFor(model => model.Status)
+                                </td>
+                                <td>@Html.DisplayFor(Model => item.CreatedAt)</td>
+                                <td>@Html.DisplayFor(Model => item.CompletedAt)</td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@item.OrderID" class="btn btn-info btn-sm">Xem</a>
+                                    <a asp-action="Edit" asp-route-id="@item.OrderID" class="btn btn-warning btn-sm">Sửa</a>
+                                    <a asp-action="Delete" asp-route-id="@item.OrderID" class="btn btn-danger btn-sm">Xóa</a>
+                                </td>
+                                </tr>
+                            }
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+}
+else
+{
+    <div class="container mt-4 order-container">
+        <div class="row mb-3">
+            <div class="text-lg-start">
+                <div style="display: inline-flex; align-items: center;">
+                    <i class="fa-solid fa-list-check me-2 text-primary"></i>
+                    <h4 class="fw-bold mb-0">Danh sách đơn hàng</h4>
+                </div>
             </div>
         </div>
+
+        <table class="table table-hover order-table">
+            <thead>
+                <tr>
+                    <th>Mã đơn hàng</th>
+                    <th>Tổng tiền</th>
+                    <th onclick="sortByStatus()">
+                        Trạng thái
+                        <i id="statusSortIcon" class="bi bi-arrow-down-up ms-1"></i>
+                    </th>
+                    <th onclick="sortByCreated()">
+                        Ngày tạo
+                        <i id="createdSortIcon" class="bi bi-arrow-down-up ms-1"></i>
+                    </th>
+
+                    <th>Hoàn tất</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="orderList"></tbody>
+        </table>
     </div>
-
-    <table class="table table-hover order-table">
-        <thead>
-            <tr>
-                <th>Mã đơn hàng</th>
-                <th>Tổng tiền</th>
-                <th onclick="sortByStatus()">
-                    Trạng thái
-                    <i id="statusSortIcon" class="bi bi-arrow-down-up ms-1"></i>
-                </th>
-                <th onclick="sortByCreated()">
-                    Ngày tạo
-                    <i id="createdSortIcon" class="bi bi-arrow-down-up ms-1"></i>
-                </th>
-
-                <th>Hoàn tất</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody id="orderList"></tbody>
-    </table>
-</div>
-
+}
 <script>
-    let orders = [];
     let sortStatusAsc = true;
     let sortCreatedAsc = true;
 
