@@ -17,7 +17,7 @@ namespace FastFood.MVC.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.14")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -279,6 +279,51 @@ namespace FastFood.MVC.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("FastFood.MVC.Models.CartItem", b =>
+                {
+                    b.Property<int>("CustomerID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DiscountedPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PromotionID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PromotionName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("CustomerID", "ProductID");
+
+                    b.HasIndex("ProductID");
+
+                    b.HasIndex("PromotionID");
+
+                    b.ToTable("CartItems");
+                });
+
             modelBuilder.Entity("FastFood.MVC.Models.Category", b =>
                 {
                     b.Property<int>("CategoryID")
@@ -350,6 +395,9 @@ namespace FastFood.MVC.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderID"));
 
+                    b.Property<int>("AddressID")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
@@ -365,13 +413,24 @@ namespace FastFood.MVC.Data.Migrations
                     b.Property<int?>("ShipperID")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("ShippingFee")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ShippingMethod")
+                        .HasColumnType("int");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("TotalCharge")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("OrderID");
+
+                    b.HasIndex("AddressID");
 
                     b.HasIndex("CustomerID");
 
@@ -390,8 +449,21 @@ namespace FastFood.MVC.Data.Migrations
                     b.Property<int>("ProductID")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("DiscountedUnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("PromotionID")
                         .HasColumnType("int");
+
+                    b.Property<int?>("PromotionID1")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PromotionName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -399,13 +471,18 @@ namespace FastFood.MVC.Data.Migrations
                     b.Property<decimal>("SubTotal")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("OrderID", "ProductID");
 
                     b.HasIndex("ProductID");
 
-                    b.HasIndex("PromotionID")
+                    b.HasIndex("PromotionID");
+
+                    b.HasIndex("PromotionID1")
                         .IsUnique()
-                        .HasFilter("[PromotionID] IS NOT NULL");
+                        .HasFilter("[PromotionID1] IS NOT NULL");
 
                     b.ToTable("OrderDetails");
                 });
@@ -606,6 +683,32 @@ namespace FastFood.MVC.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FastFood.MVC.Models.CartItem", b =>
+                {
+                    b.HasOne("FastFood.MVC.Models.Customer", "Customer")
+                        .WithMany("CartItems")
+                        .HasForeignKey("CustomerID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FastFood.MVC.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FastFood.MVC.Models.Promotion", "Promotion")
+                        .WithMany()
+                        .HasForeignKey("PromotionID")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Promotion");
+                });
+
             modelBuilder.Entity("FastFood.MVC.Models.Customer", b =>
                 {
                     b.HasOne("FastFood.MVC.Models.ApplicationUser", "User")
@@ -630,6 +733,12 @@ namespace FastFood.MVC.Data.Migrations
 
             modelBuilder.Entity("FastFood.MVC.Models.Order", b =>
                 {
+                    b.HasOne("FastFood.MVC.Models.Address", "Address")
+                        .WithMany()
+                        .HasForeignKey("AddressID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("FastFood.MVC.Models.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerID")
@@ -645,6 +754,8 @@ namespace FastFood.MVC.Data.Migrations
                         .WithMany("Orders")
                         .HasForeignKey("ShipperID")
                         .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Address");
 
                     b.Navigation("Customer");
 
@@ -668,9 +779,13 @@ namespace FastFood.MVC.Data.Migrations
                         .IsRequired();
 
                     b.HasOne("FastFood.MVC.Models.Promotion", "Promotion")
-                        .WithOne("OrderDetail")
-                        .HasForeignKey("FastFood.MVC.Models.OrderDetail", "PromotionID")
+                        .WithMany()
+                        .HasForeignKey("PromotionID")
                         .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FastFood.MVC.Models.Promotion", null)
+                        .WithOne("OrderDetail")
+                        .HasForeignKey("FastFood.MVC.Models.OrderDetail", "PromotionID1");
 
                     b.Navigation("Order");
 
@@ -752,6 +867,8 @@ namespace FastFood.MVC.Data.Migrations
             modelBuilder.Entity("FastFood.MVC.Models.Customer", b =>
                 {
                     b.Navigation("Address");
+
+                    b.Navigation("CartItems");
 
                     b.Navigation("Orders");
                 });
