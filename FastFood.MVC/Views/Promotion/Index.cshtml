@@ -43,13 +43,13 @@
                         <td class="text-right text-success font-weight-bold">@((item.DiscountPercent * 100).ToString("0.##"))%</td>
                         <td class="text-center">
                             <div class="btn-group" role="group">
-                                <a class="btn btn-sm btn-warning  me-2" asp-action="Edit" asp-route-id="@item.PromotionID" title="Sửa">
+                                <a class="btn btn-sm btn-warning btn-sm p-1" asp-action="Edit" asp-route-id="@item.PromotionID" title="Sửa">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <a class="btn btn-sm btn-info text-white me-2" asp-action="Details" asp-route-id="@item.PromotionID" title="Chi Tiết">
+                                <a class="btn btn-sm btn-info text-white btn-sm p-1" asp-action="Details" asp-route-id="@item.PromotionID" title="Chi Tiết">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a class="btn btn-sm btn-danger" asp-action="Delete" asp-route-id="@item.PromotionID" title="Xóa">
+                                <a class="btn btn-sm btn-danger btn-sm p-1" asp-action="Delete" asp-route-id="@item.PromotionID" title="Xóa">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>
