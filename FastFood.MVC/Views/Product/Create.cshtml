@@ -3,11 +3,10 @@
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
-
-<h1>Tạo mới sản phẩm</h1>
-<hr />
-<div class="row">
-    <div class="col-md-4">
+<div class="form-body">
+<div class="admincontainer">
+    <div class="adminform-container">
+        <h1>Tạo mới sản phẩm</h1>
         <form asp-action="Create" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
@@ -20,10 +19,10 @@
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
+                 <label asp-for="Description" class="control-label"></label>
+                 @Html.TextAreaFor(model => model.Description, new { @class = "form-control", rows = "4" })
+                 <span asp-validation-for="Description" class="text-danger"></span>
+             </div>
             <div class="form-group">
                 <label asp-for="Price" class="control-label"></label>
                 <input asp-for="Price" class="form-control" />
@@ -34,28 +33,26 @@
                 <input asp-for="ImageFile" class="form-control" />
                 <span asp-validation-for="ImageFile" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="IsNew" class="control-label"></label>
-                @Html.CheckBoxFor(model => model.IsNew)
-                <span asp-validation-for="IsNew" class="text-danger"></span>
+            <div class="form-group-checkbox">
+                <label>
+                    @Html.CheckBoxFor(model => model.IsCarouselItem) CarouselItem
+                </label>
+                <label>
+                    @Html.CheckBoxFor(model => model.IsNew) New
+                </label>
+                <label>
+                    @Html.CheckBoxFor(model => model.IsPopular) Popular
+                </label>
             </div>
-            <div class="form-group">
-                <label asp-for="IsCarouselItem" class="control-label"></label>
-                @Html.CheckBoxFor(model => model.IsCarouselItem)
-                <span asp-validation-for="IsCarouselItem" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IsPopular" class="control-label"></label>
-                @Html.CheckBoxFor(model => model.IsPopular)
-                <span asp-validation-for="IsPopular" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group d-flex justify-content-between">
-                <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
-                <button type="submit" class="btn btn-primary">Tạo</button>
+                <br />
+            <div class="form-group-btn">
+                 <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+                 <button type="reset" class="btn btn-warning">Nhập lại</button>
+                 <button type="submit" class="btn btn-primary">Thêm sản phẩm</button>
             </div>
         </form>
     </div>
+</div>
 </div>
 
 @section Scripts {

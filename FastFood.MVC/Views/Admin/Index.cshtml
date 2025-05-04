@@ -3,7 +3,7 @@
 @model IEnumerable<UserViewModel>
 
 @{
-    Layout = "_Layout.cshtml";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -44,10 +44,10 @@
                 <td>@user.RoleName</td>
                 <td>
                     <div class="btn-group" role="group">
-                        <a class="btn btn-sm btn-warning me-2" asp-action="Edit" asp-controller="Admin" asp-route-email="@user.Email">
+                            <a class="btn btn-sm btn-warning btn-sm p-1" asp-action="Edit" asp-controller="Admin" asp-route-email="@user.Email">
                             <i class="bi bi-pencil-square"></i> Sửa
                         </a>
-                        <a class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                            <a class="btn btn-sm btn-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal"
                             onclick="showDeleteModal('@user.Email', '@Url.Action("Delete", "Admin", new { email = user.Email })')">
                             <i class="bi bi-trash"></i> Xóa
                         </a>

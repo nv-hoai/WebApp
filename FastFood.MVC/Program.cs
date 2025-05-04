@@ -59,7 +59,9 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AdminOrEmployeeAccess", policy =>
         policy.RequireRole("Admin", "Employee"))
     .AddPolicy("OrderManagementAccess", policy =>
-        policy.RequireRole("Admin", "Employee", "Shipper"));
+        policy.RequireRole("Admin", "Employee", "Shipper"))
+    .AddPolicy("CustomerEmployeeAdminAccess", policy =>
+        policy.RequireRole("Customer", "Admin", "Employee"));
 
 builder.Services.AddDistributedMemoryCache(); 
 

@@ -1,90 +1,167 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model IEnumerable<FastFood.MVC.Models.Order>
+@{
     Layout = "_Layout.cshtml";
 }
-<div class="container mt-1">
-    <div class="row">
-        <div class="text-lg-start mt-2 mb-1">
-            <div style="display: inline-flex; align-items: center;">
-                <i class="fa-solid fa-location-dot" style="margin-right: 8px;"></i> 
-                <h4>Địa chỉ nhận hàng</h4>
+@if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    <h1 class="display-5 mb-4">Quản lý đơn hàng</h1>
+    <hr />
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <form method="get" asp-action="Index" asp-controller="Order">
+            <div class="d-flex align-items-center gap-3">
+                <div class="input-group" style="width: 300px;">
+                    <input type="text" class="form-control" placeholder="Tìm kiếm theo mã đơn hàng..." name="orderId" value="@Context.Request.Query["orderId"]">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <select asp-items="ViewBag.Status" class="form-select" name="status" style="width: 200px;">
+                    <option value="">Tất cả trạng thái</option>
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-filter"></i> Lọc
+                </button>
             </div>
-        </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã đơn hàng</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Thời gian tạo</th>
+                            <th>Thời gian hoàn tất</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                     <tbody>
+                            @foreach(var item in Model)
+                            {
+                                <tr>
+                                <td>@Html.DisplayFor(Model=>item.OrderID)</td>
+                                <td>@Html.DisplayFor(Model => item.TotalCharge)</td>
+                                <td>
+                                    @Html.DisplayNameFor(model => model.Status)
+                                </td>
+                                <td>@Html.DisplayFor(Model => item.CreatedAt)</td>
+                                <td>@Html.DisplayFor(Model => item.CompletedAt)</td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@item.OrderID" class="btn btn-info btn-sm">Xem</a>
+                                    <a asp-action="Edit" asp-route-id="@item.OrderID" class="btn btn-warning btn-sm">Sửa</a>
+                                    <a asp-action="Delete" asp-route-id="@item.OrderID" class="btn btn-danger btn-sm">Xóa</a>
+                                </td>
+                                </tr>
+                            }
+                    </tbody>
+                </table>
+            </div>
+        </form>
     </div>
-    <form>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <select class="form-select custom-radius" id="tinhThanh">
-                        <option selected>Chọn Tỉnh / Thành</option>
-                    </select>
+}
+else
+{
+    <div class="container mt-4 order-container">
+        <div class="row mb-3">
+            <div class="text-lg-start">
+                <div style="display: inline-flex; align-items: center;">
+                    <i class="fa-solid fa-list-check me-2 text-primary"></i>
+                    <h4 class="fw-bold mb-0">Danh sách đơn hàng</h4>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <select class="form-select custom-radius" id="quanHuyen">
-                        <option selected>Chọn Xã/Phường</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <input type="text" class="form-control custom-radius" id="diaChi" placeholder="Nhập địa chỉ">
-                </div>
-            </div>
         </div>
-    </form>
-</div>
-<div class="container mt-1">
-    <div class="row">
-        <div class="text-lg-start mt-2 mb-1">
-            <div style="display: inline-flex; align-items: center;">
-                <i class="fa-solid fa-cart-shopping" style="margin-right: 8px;"></i>
-                <h4>Chi tiết đơn hàng</h4>
-            </div>
-        </div>
-    </div>
-    <table class="table table-bordered table-hover">
-        <thead>
-            <tr>
-                <th scope="col">Tên sản phẩm</th>
-                <th scope="col">Số lượng</th>
-                <th scope="col">Giá</th>
-                <th scope="col">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody id="cartItems">
-            <!-- Xử lý phần thông tin món ăn ở đây -->
-        </tbody>
-    </table>
-    <h5 class="mt-4">Phương thức giao hàng</h5>
-    <div class="btn-group" role="group" aria-label="Phương thức giao hàng">
-        <button type="button" class="btn btn-outline-primary" id="btnPriority">
-            Ưu tiên: < 20 phút - <span class="price">50,000 VND</span>
-        </button>
-        <button type="button" class="btn btn-outline-primary" id="btnFast">
-            Nhanh: 15 phút - <span class="price">40,000 VND</span>
-        </button>
-        <button type="button" class="btn btn-outline-primary" id="btnEconomical">
-            Tiết kiệm: 30 phút - <span class="price">30,000 VND</span>
-        </button>
-    </div>
-    <h5 class="mt-4">Khuyến mãi</h5>
-    <div class="mb-3">
-        <input type="text" class="form-control" id="promoCode" placeholder="Nhập mã khuyến mãi" />
-        <button type="button" class="btn btn-info mt-2" id="applyPromoBtn">Áp dụng mã</button>
-    </div>
 
-    <div class="mt-3" id="discountInfo">
-        <p><strong>Giảm giá: </strong><span id="discountAmount">0</span></p>
-    </div>
+        <table class="table table-hover order-table">
+            <thead>
+                <tr>
+                    <th>Mã đơn hàng</th>
+                    <th>Tổng tiền</th>
+                    <th onclick="sortByStatus()">
+                        Trạng thái
+                        <i id="statusSortIcon" class="bi bi-arrow-down-up ms-1"></i>
+                    </th>
+                    <th onclick="sortByCreated()">
+                        Ngày tạo
+                        <i id="createdSortIcon" class="bi bi-arrow-down-up ms-1"></i>
+                    </th>
 
-    <div class="d-flex justify-content-between mt-4">
-        <h5>Tổng tiền: <span id="totalAmount">0</span> VND</h5>
+                    <th>Hoàn tất</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="orderList"></tbody>
+        </table>
     </div>
+}
+<script>
+    let sortStatusAsc = true;
+    let sortCreatedAsc = true;
 
-    <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-primary" id="checkoutBtn">Thanh toán</button>
-        <button type="button" class="btn btn-secondary" id="clearCartBtn">Xóa giỏ hàng</button>
-    </div>
-</div>
+    function renderOrders(orderData) {
+        const tableBody = document.getElementById('orderList');
+        tableBody.innerHTML = '';
 
+        orderData.forEach(order => {
+            let statusBadge = '';
+            switch (order.Status) {
+                case 'Hoàn tất':
+                    statusBadge = '<span class="badge badge-success">Hoàn tất</span>';
+                    break;
+                case 'Đang giao':
+                    statusBadge = '<span class="badge badge-warning">Đang giao</span>';
+                    break;
+                case 'Chờ xác nhận':
+                    statusBadge = '<span class="badge badge-secondary">Chờ xác nhận</span>';
+                    break;
+                default:
+                    statusBadge = `<span class="badge bg-light text-dark">${order.Status}</span>`;
+            }
+
+            const row = `
+                <tr>
+                    <td><a href="#" class="text-primary fw-semibold">ORD_${order.OrderID}</a></td>
+                    <td>${order.TotalCharge.toLocaleString()} VND</td>
+                    <td>${statusBadge}</td>
+                    <td>${order.CreatedAt}</td>
+                    <td>${order.CompletedAt || '-'}</td>
+                    <td><button class="btn btn-sm btn-info">Xem</button></td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    }
+
+        function sortByStatus() {
+        const sorted = [...orders].sort((a, b) => {
+            if (a.Status < b.Status) return sortStatusAsc ? -1 : 1;
+            if (a.Status > b.Status) return sortStatusAsc ? 1 : -1;
+            return 0;
+        });
+        sortStatusAsc = !sortStatusAsc;
+
+        const icon = document.getElementById("statusSortIcon");
+        icon.className = sortStatusAsc ? "bi bi-arrow-up-short" : "bi bi-arrow-down-short";
+
+        renderOrders(sorted);
+    }
+
+
+    function sortByCreated() {
+        const sorted = [...orders].sort((a, b) => {
+            const dateA = new Date(a.CreatedAt);
+            const dateB = new Date(b.CreatedAt);
+            return sortCreatedAsc ? dateA - dateB : dateB - dateA;
+        });
+        sortCreatedAsc = !sortCreatedAsc;
+
+        const icon = document.getElementById("statusSortIcon");
+        icon.className = sortStatusAsc ? "bi bi-arrow-up-short" : "bi bi-arrow-down-short";
+        renderOrders(sorted);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderOrders(orders);
+    });
+</script>
