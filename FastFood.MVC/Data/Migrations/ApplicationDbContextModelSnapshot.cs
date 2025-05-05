@@ -54,7 +54,7 @@ namespace FastFood.MVC.Data.Migrations
                     b.HasIndex("CustomerID")
                         .IsUnique();
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Address");
                 });
 
             modelBuilder.Entity("FastFood.MVC.Models.Admin", b =>
@@ -395,8 +395,9 @@ namespace FastFood.MVC.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderID"));
 
-                    b.Property<int>("AddressID")
-                        .HasColumnType("int");
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
@@ -429,8 +430,6 @@ namespace FastFood.MVC.Data.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("OrderID");
-
-                    b.HasIndex("AddressID");
 
                     b.HasIndex("CustomerID");
 
@@ -733,12 +732,6 @@ namespace FastFood.MVC.Data.Migrations
 
             modelBuilder.Entity("FastFood.MVC.Models.Order", b =>
                 {
-                    b.HasOne("FastFood.MVC.Models.Address", "Address")
-                        .WithMany()
-                        .HasForeignKey("AddressID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("FastFood.MVC.Models.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerID")
@@ -754,8 +747,6 @@ namespace FastFood.MVC.Data.Migrations
                         .WithMany("Orders")
                         .HasForeignKey("ShipperID")
                         .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Address");
 
                     b.Navigation("Customer");
 
