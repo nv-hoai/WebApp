@@ -16,7 +16,6 @@ namespace FastFood.MVC.Data
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Shipper> Shippers { get; set; }
-        public DbSet<Address> Addresses { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<Product> Products { get; set; }
@@ -59,12 +58,6 @@ namespace FastFood.MVC.Data
                 .WithOne(s => s.Shipper)
                 .HasForeignKey<Shipper>(s => s.UserID)
                 .OnDelete(DeleteBehavior.Cascade); // Delete Shipper if User is deleted
-
-            modelBuilder.Entity<Address>()
-                .HasOne(a => a.Customer)
-                .WithOne(c => c.Address)
-                .HasForeignKey<Address>(a => a.CustomerID)
-                .OnDelete(DeleteBehavior.Cascade); // Delete Address if Customer is deleted
 
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Category)
