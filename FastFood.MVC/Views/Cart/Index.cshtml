@@ -84,29 +84,11 @@
             </div>
         </div>
     </div>
-    <form>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <select class="form-select custom-radius" id="tinhThanh">
-                        <option selected>Chọn Tỉnh / Thành</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <select class="form-select custom-radius" id="quanHuyen">
-                        <option selected>Chọn Xã/Phường</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <input type="text" class="form-control custom-radius" id="diaChi" placeholder="Nhập địa chỉ">
-                </div>
-            </div>
+    <div class="row">
+        <div class="col-md-8">
+            <input type="text" class="form-control custom-radius" id="addressInput" placeholder="Nhập địa chỉ nhận hàng" required />
         </div>
-    </form>
+    </div>
 </div>
 
 <!--Chọn hình thức giao hàng & khuyến mãi-->
@@ -117,7 +99,7 @@
             Ưu tiên: < 20 phút - <span class="price">50.000 VND</span>
         </button>
         <button type="button" class="btn btn-outline-primary" id="btnFast" data-shippingfee="40000">
-            Nhanh: 15 phút - <span class="price">40.000 VND</span>
+			Nhanh: 15 phút - <span class="price">40.000 VND</span>
         </button>
         <button type="button" class="btn btn-outline-primary" id="btnEconomical" data-shippingfee="30000">
             Tiết kiệm: 30 phút - <span class="price">30.000 VND</span>
@@ -159,6 +141,7 @@
     </div>
 </div>
 
+@Html.AntiForgeryToken()
 <script>
     $(document).ready(function () {
         $('.btn-increase, .btn-decrease').click(function () {
@@ -264,15 +247,38 @@
         });
 
         $('#checkoutBtn').click(function () {
+            const address = $('#addressInput').val().trim();
+            if (!address) {
+                alert("Vui lòng nhập địa chỉ giao hàng.");
+                return;
+            }
+
+            const shippingFeeText = $('#shippingFee').text().replace(/[^\d]/g, '');
+            const shippingFee = parseInt(shippingFeeText) || 0;
+
+            let shippingMethod;
+            switch (shippingFee) {
+                case 50000: shippingMethod = 0; break; // Ưu tiên
+                case 40000: shippingMethod = 1; break; // Nhanh
+                case 30000: shippingMethod = 2; break; // Tiết kiệm
+                default:
+                    alert("Vui lòng chọn phương thức giao hàng.");
+                    return;
+            }
+
             $.ajax({
                 type: 'POST',
                 url: '/Order/CreateFromCart',
+                data: {
+                    Address: address,
+                    ShippingMethod: shippingMethod
+                },
                 headers: {
                     'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
                 },
                 success: function (response) {
                     if (response.success) {
-                        window.location.href = '/OrderDetails/Details?id=' + response.orderId;
+                        window.location.href = '/Order/MyOrders';
                     } else {
                         alert(response.message || 'Có lỗi xảy ra khi đặt hàng.');
                     }
