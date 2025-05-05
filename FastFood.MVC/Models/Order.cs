@@ -29,8 +29,7 @@ namespace FastFood.MVC.Models
 
         public int? EmployeeID { get; set; }
         public virtual Employee? Employee { get; set; }
-		public int AddressID { get; set; }
-		public virtual Address Address { get; set; } = null!;
+        public string Address { get; set; }
 		public ShippingMethod ShippingMethod { get; set; }
 		public decimal ShippingFee { get; set; }
 

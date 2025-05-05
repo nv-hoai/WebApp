@@ -188,7 +188,7 @@ namespace FastFood.MVC.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "CustomerAccess")]
-		public async Task<IActionResult> CreateFromCart(int AddressID, ShippingMethod ShippingMethod)
+		public async Task<IActionResult> CreateFromCart(String Address, ShippingMethod ShippingMethod)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
@@ -216,7 +216,7 @@ namespace FastFood.MVC.Controllers
             var order = new Order
             {
                 CustomerID = customer.CustomerID,
-                AddressID = AddressID,
+                Address = Address,
                 ShippingMethod = ShippingMethod,
                 CreatedAt = DateTime.Now,
                 Status = OrderStatus.Pending
@@ -284,52 +284,45 @@ namespace FastFood.MVC.Controllers
             });
 		}
 
-        [Authorize(Policy = "CustomerAccess")]
-        public async Task<IActionResult> Cancel(int orderID)
-        {
-            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var customer = await _context.Customers.FirstOrDefaultAsync (c => c.UserID == userID);
+		[Authorize(Policy = "CustomerAccess")]
+		public async Task<IActionResult> Cancel(int orderID)
+		{
+			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
 
-            if (customer == null)
-            {
-				return RedirectToPage("/Account/Login", new
+			if (customer == null)
+			{
+				return Json(new { success = false, message = "Bạn chưa đăng nhập." });
+			}
+
+			var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.CustomerID == customer.CustomerID);
+
+			if (order == null)
+			{
+				return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID}." });
+			}
+
+			if (order.Status != OrderStatus.Pending)
+			{
+				return Json(new
 				{
-					area = "Identity",
-					returnUrl = Url.Action("Details", "Order")
+					success = false,
+					message = $"Không thể hủy đơn hàng #{orderID} vì trạng thái không phải 'Mới tạo'."
 				});
 			}
 
-            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID);
-            if (order != null && order.Status == OrderStatus.Pending)
-            {
-                _context.Orders.Remove(order);
-                await _context.SaveChangesAsync();
-            } 
-            else if (order == null)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = $"Không tìm thấy đơn hàng #{orderID}."
-                });
-            }
-            else
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = $"Không thể xóa đơn hàng #{orderID} vì không còn ở trạng thái 'Pending'."
-                });
-            }
+			order.Status = OrderStatus.Cancelled;
 
-            return Json(new
-            {
-                success = true,
-                message = $"Xóa thành công đơn hàng #{orderID}."
-            });
+			await _context.SaveChangesAsync();
+
+			return Json(new
+			{
+				success = true,
+				message = $"Đơn hàng #{orderID} đã được hủy."
+			});
 		}
 
-        [Authorize(Policy = "CustomerAccess")] 
+		[Authorize(Policy = "CustomerAccess")] 
         public async Task<IActionResult> MyOrders()
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -345,11 +338,10 @@ namespace FastFood.MVC.Controllers
 			}
 
 			var orders = await _context.Orders
-		.Where(o => o.CustomerID == customer.CustomerID)
-		.Include(o => o.Address)
-		.Include(o => o.OrderDetails)
-		.OrderByDescending(o => o.CreatedAt)
-		.ToListAsync();
+		        .Where(o => o.CustomerID == customer.CustomerID)
+		        .Include(o => o.OrderDetails)
+		        .OrderByDescending(o => o.CreatedAt)
+		        .ToListAsync();
 
             foreach (var order in orders)
             {
@@ -358,5 +350,35 @@ namespace FastFood.MVC.Controllers
 
 			return View(orders);
         }
-    }
+
+		[Authorize(Policy = "CustomerAccess")]
+		public async Task<IActionResult> MyOrderDetails(int OrderID)
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userId);
+
+			if (customer == null)
+			{
+				return RedirectToPage("/Account/Login", new
+				{
+					area = "Identity",
+					returnUrl = Url.Action("MyOrderDetails", "Order", new { OrderID })
+				});
+			}
+
+			var order = await _context.Orders
+				.Include(o => o.OrderDetails)
+					.ThenInclude(od => od.Product)
+				.FirstOrDefaultAsync(o => o.OrderID == OrderID && o.CustomerID == customer.CustomerID);
+
+			if (order == null)
+			{
+				return NotFound();
+			}
+
+			order.CalculateTotalCharge(); // Tính lại nếu cần
+			return View(order);
+		}
+
+	}
 }
