@@ -1,20 +1,31 @@
-﻿namespace FastFood.MVC.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using FastFood.MVC.Helpers;
+
+namespace FastFood.MVC.Models
 {
     public class CartItem
     {
-        public int ProductID { get; set; }
+		public int CustomerID { get; set; }
+		public Customer Customer { get; set; } = null!;
+		public int ProductID { get; set; }
         public string ProductName { get; set; } = string.Empty;
-        public decimal Price { get; set; }
+        public decimal UnitPrice { get; set; }
         public int Quantity { get; set; }
+
 		public int? PromotionID { get; set; }
-		public string? PromotionName { get; set; } 
-		public decimal DiscountPercent { get; set; } = 0;
+		public string? PromotionName { get; set; }
+		public Promotion? Promotion { get; set; }
+		public decimal DiscountPercent { get; set; }
+		public decimal DiscountedPrice { get; set; }
+		public decimal SubTotal { get; set; }
 
-		public decimal SubTotal => CalculateSubTotal();
-
-		public decimal CalculateSubTotal()
+		public void Calculate ()
 		{
-			return Price * Quantity * (1 - DiscountPercent);
+			DiscountPercent = Promotion?.DiscountPercent ?? 0;
+			DiscountedPrice = PromotionHelper.GetDiscountedPrice(UnitPrice, Promotion);
+			SubTotal = PromotionHelper.GetSubtotal(UnitPrice, Quantity, Promotion);
 		}
+		public DateTime CreatedAt { get; set; }
+		public Product Product { get; set; } = null!;
 	}
 }

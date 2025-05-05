@@ -4,6 +4,7 @@ using FastFood.MVC.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FastFood.MVC.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250504102739_CreateCartItemAndUpdateOrder")]
+    partial class CreateCartItemAndUpdateOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,7 +57,7 @@ namespace FastFood.MVC.Data.Migrations
                     b.HasIndex("CustomerID")
                         .IsUnique();
 
-                    b.ToTable("Address");
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("FastFood.MVC.Models.Admin", b =>
@@ -395,9 +398,8 @@ namespace FastFood.MVC.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderID"));
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("AddressID")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
@@ -430,6 +432,8 @@ namespace FastFood.MVC.Data.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("OrderID");
+
+                    b.HasIndex("AddressID");
 
                     b.HasIndex("CustomerID");
 
@@ -732,6 +736,12 @@ namespace FastFood.MVC.Data.Migrations
 
             modelBuilder.Entity("FastFood.MVC.Models.Order", b =>
                 {
+                    b.HasOne("FastFood.MVC.Models.Address", "Address")
+                        .WithMany()
+                        .HasForeignKey("AddressID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("FastFood.MVC.Models.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerID")
@@ -747,6 +757,8 @@ namespace FastFood.MVC.Data.Migrations
                         .WithMany("Orders")
                         .HasForeignKey("ShipperID")
                         .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("Address");
 
                     b.Navigation("Customer");
 

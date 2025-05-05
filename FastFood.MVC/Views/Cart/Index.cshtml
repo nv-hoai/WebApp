@@ -1,8 +1,9 @@
 ﻿@{
-Layout = "_Layout.cshtml";
+    Layout = "_Layout.cshtml";
 }
 @model List<CartItem>
 
+<!--Xem chi tiết giỏ hàng-->
 <div class="container mt-1">
     <div class="row">
         <div class="text-lg-start mt-2 mb-1">
@@ -16,9 +17,11 @@ Layout = "_Layout.cshtml";
     <table class="table table-bordered table-hover">
         <thead>
             <tr>
+                <th scope="col">Hình ảnh</th>
                 <th scope="col">Tên sản phẩm</th>
                 <th scope="col">Số lượng</th>
-                <th scope="col">Đơn giá</th>
+                <th scope="col">Giá gốc</th>
+                <th scope="col">Giá sau giảm</th>
                 <th scope="col">Thành tiền</th>
                 <th scope="col">Thao tác</th>
             </tr>
@@ -34,33 +37,103 @@ Layout = "_Layout.cshtml";
                     </td>
                 </tr>
             }
-
             @foreach (var item in Model)
             {
                 <tr data-product-id="@item.ProductID">
-                    <td>@item.ProductName</td>
-                    <td class="text-center quantity-cell">
-                        <button type="button" class="btn-decrease btn btn-link" data-productid="@item.ProductID">
-                            <i class="fa-solid fa-circle-minus"></i>
-                        </button>
-                        <span class="item-quantity">@item.Quantity</span>
-                        <button type="button" class="btn-increase btn btn-link" data-productid="@item.ProductID">
-                            <i class="fa-solid fa-circle-plus"></i>
-                        </button>
+                    <td>
+                        @if (item.Product != null)
+                        {
+                            <img src="@item.Product.ImageUrl" alt="Ảnh sản phẩm" width="60" />
+                        }
+                        else
+                        {
+                            <span class="text-danger">Không có ảnh</span>
+                        }
                     </td>
-                    <td class="text-end">@((item.Price * 1000).ToString("N0")) VND</td>
-                    <td class="item-subtotal text-end">@((item.CalculateSubTotal() * 1000).ToString("N0")) VND</td>
+                    <td>@item.ProductName</td>
                     <td class="text-center">
-                        <button class="btn-delete text-danger btn btn-link" data-productid="@item.ProductID">
-                            <i class="fa-solid fa-trash"></i> Xóa
-                        </button>
+                        <button type="button" class="btn-decrease btn btn-link btn-lg" style="color:red" data-productid="@item.ProductID">-</button>
+                        <span class="item-quantity">@item.Quantity</span>
+                        <button type="button" class="btn-increase btn btn-link btn-lg" data-productid="@item.ProductID">+</button>
+                    </td>
+                    <td class="text-decoration-line-through text-muted me-2 text-center">
+                        @((item.UnitPrice * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND
+                    </td>
+                    <td class="fw-bold text-danger text-center">
+                        @((item.DiscountedPrice * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND
+                    </td>
+                    <td class="item-subtotal text-center">
+                        @((item.SubTotal * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND
+                    </td>
+                    <td class="text-center">
+                        <button class="btn-delete text-danger" data-productid="@item.ProductID" style="border: none; background: none;">Xóa</button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+</div>
 
-    <h4>Tổng tiền: <span id="totalAmount">@((Model.Sum(m => m.CalculateSubTotal() * 1000)).ToString("N0"))</span> VND</h4>
+<!--Nhập thông tin địa chỉ giao hàng-->
+<div class="container mt-1">
+    <div class="row">
+        <div class="text-lg-start mt-2 mb-1">
+            <div style="display: inline-flex; align-items: center;">
+                <i class="fa-solid fa-location-dot" style="margin-right: 8px;"></i>
+                <h4>Địa chỉ nhận hàng</h4>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <input type="text" class="form-control custom-radius" id="addressInput" placeholder="Nhập địa chỉ nhận hàng" required />
+        </div>
+    </div>
+</div>
+
+<!--Chọn hình thức giao hàng & khuyến mãi-->
+<div class="container mt-1">
+    <h4 class="mt-4">Phương thức giao hàng</h4>
+    <div class="btn-group" role="group" aria-label="Phương thức giao hàng">
+        <button type="button" class="btn btn-outline-primary" id="btnPriority" data-shippingfee="50000">
+            Ưu tiên: < 20 phút - <span class="price">50.000 VND</span>
+        </button>
+        <button type="button" class="btn btn-outline-primary" id="btnFast" data-shippingfee="40000">
+			Nhanh: 15 phút - <span class="price">40.000 VND</span>
+        </button>
+        <button type="button" class="btn btn-outline-primary" id="btnEconomical" data-shippingfee="30000">
+            Tiết kiệm: 30 phút - <span class="price">30.000 VND</span>
+        </button>
+    </div>
+
+    <h4 class="mt-4">Khuyến mãi</h4>
+    <div class="mb-3">
+        <input type="text" class="form-control" id="promoCode" placeholder="Nhập mã khuyến mãi" />
+        <button type="button" class="btn btn-info mt-2" id="applyPromoBtn">Áp dụng mã</button>
+    </div>
+
+    <div class="mt-3" id="discountInfo">
+        <p><strong>Giảm giá: </strong><span id="discountAmount">0</span></p>
+    </div>
+</div>
+
+<!--Hiển thị tổng tiền và các nút thao tác-->
+<div class="container mt-1">
+    <h4>Tổng tiền</h4>
+    <table>
+        <tr>
+            <td>Phí tạm tính</td>
+            <td><span id="totalAmount">@((Model.Sum(m => m.SubTotal * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))))</span> VND</td>
+        </tr>
+        <tr>
+            <td>Phí giao hàng</td>
+            <td><span id="shippingFee">0 VND</span></td>
+        </tr>
+        <tr>
+            <td>Tổng tiền</td>
+            <td><span id="totalCharge">0 VND</span></td>
+        </tr>
+    </table>
 
     <div class="d-flex justify-content-between">
         <button type="button" class="btn btn-primary" id="checkoutBtn">Thanh toán</button>
@@ -68,41 +141,36 @@ Layout = "_Layout.cshtml";
     </div>
 </div>
 
+@Html.AntiForgeryToken()
 <script>
     $(document).ready(function () {
-        // Xử lý tăng/giảm số lượng
         $('.btn-increase, .btn-decrease').click(function () {
             var button = $(this);
             var row = button.closest('tr');
             var productID = button.data('productid');
 
-            // Lấy số lượng hiện tại từ giao diện
             var currentQty = parseInt(row.find('.item-quantity').text());
             var quantity = button.hasClass('btn-increase') ? currentQty + 1 : currentQty - 1;
 
             $.ajax({
                 type: 'POST',
                 url: '/Cart/UpdateCart',
-                data: {
-                    productID: productID,
-                    quantity: quantity
-                },
-                success: function () {
-                    if (quantity <= 0) {
-                        $.post('/Cart/RemoveFromCart', { productID: productID }, function () {
+                data: { productID: productID, quantity: quantity },
+                success: function (response) {
+                    if (response.success) {
+                        if (quantity <= 0) {
                             row.remove();
-                            updateTotal();
-                        });
+                        } else {
+                            row.find('.item-quantity').text(quantity);
+                            var priceText = row.find('td').eq(4).text().replace(/[^\d]/g, '');
+                            var price = parseInt(priceText) || 0;
+                            var subtotal = price * quantity;
+                            row.find('.item-subtotal').text(subtotal.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
+                        }
+                        updateTotal();
                     } else {
-                        row.find('.item-quantity').text(quantity);
-
-                var priceText = row.find('td').eq(2).text().replace(/[^\d]/g, '');
-                        var price = parseInt(priceText);
-                        var subtotal = price * quantity;
-                        row.find('.item-subtotal').text(subtotal.toLocaleString('vi-VN') + ' VND');
+                        alert(response.message || "Có lỗi xảy ra khi cập nhật giỏ hàng.");
                     }
-
-                    updateTotal();
                 },
                 error: function () {
                     alert("Có lỗi xảy ra khi cập nhật giỏ hàng.");
@@ -110,21 +178,25 @@ Layout = "_Layout.cshtml";
             });
         });
 
-        // Xử lý xóa sản phẩm
         $('.btn-delete').click(function (e) {
             e.preventDefault();
             let button = $(this);
             let productId = button.data('productid');
-            let productName = button.closest('tr').find('td').eq(0).text().trim();
+            let productName = button.closest('tr').find('td').eq(1).text().trim();
 
             if (!confirm('Bạn có chắc muốn xóa món "' + productName + '" khỏi giỏ hàng?')) return;
+
             $.ajax({
                 url: '/Cart/RemoveFromCart',
                 method: 'POST',
                 data: { productID: productId },
-                success: function () {
-                    button.closest('tr').remove();
-                    updateTotal();
+                success: function (response) {
+                    if (response.success) {
+                        button.closest('tr').remove();
+                        updateTotal();
+                    } else {
+                        alert(response.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
+                    }
                 },
                 error: function () {
                     alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
@@ -132,18 +204,27 @@ Layout = "_Layout.cshtml";
             });
         });
 
-        // Hàm cập nhật tổng tiền
         function updateTotal() {
             let total = 0;
             $('#cartItems tr').each(function () {
-            let subtotalText = $(this).find('.item-subtotal').text().replace(/[^\d]/g, '');
+                let subtotalText = $(this).find('.item-subtotal').text().replace(/[^\d]/g, '');
                 let subtotal = parseInt(subtotalText) || 0;
                 total += subtotal;
             });
-            $('#totalAmount').text(total.toLocaleString('vi-VN'));
+
+            let shippingFee = parseInt($('#shippingFee').text().replace(/[^\d]/g, '')) || 0;
+            let totalCharge = total + shippingFee;
+
+            $('#totalAmount').text(total.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
+            $('#totalCharge').text(totalCharge.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
         }
 
-        //Xử lý xóa giỏ hàng
+        $('#btnPriority, #btnFast, #btnEconomical').click(function () {
+            var shippingFee = parseInt($(this).data('shippingfee')) || 0;
+            $('#shippingFee').text(shippingFee.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
+            updateTotal();
+        });
+
         $('#clearCartBtn').click(function () {
             if (!confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) return;
 
@@ -152,8 +233,10 @@ Layout = "_Layout.cshtml";
                 url: '/Cart/ClearCart',
                 success: function (response) {
                     if (response.success) {
-                        $('#cartItems').empty(); // Xóa toàn bộ dòng sản phẩm
-                        $('#totalAmount').text('0'); // Reset tổng tiền
+                        $('#cartItems').empty();
+                        $('#totalAmount').text('0 VND');
+                        $('#totalCharge').text('0 VND');
+                        $('#shippingFee').text('0 VND');
                         alert('Giỏ hàng đã được xóa.');
                     }
                 },
@@ -162,7 +245,49 @@ Layout = "_Layout.cshtml";
                 }
             });
         });
+
+        $('#checkoutBtn').click(function () {
+            const address = $('#addressInput').val().trim();
+            if (!address) {
+                alert("Vui lòng nhập địa chỉ giao hàng.");
+                return;
+            }
+
+            const shippingFeeText = $('#shippingFee').text().replace(/[^\d]/g, '');
+            const shippingFee = parseInt(shippingFeeText) || 0;
+
+            let shippingMethod;
+            switch (shippingFee) {
+                case 50000: shippingMethod = 0; break; // Ưu tiên
+                case 40000: shippingMethod = 1; break; // Nhanh
+                case 30000: shippingMethod = 2; break; // Tiết kiệm
+                default:
+                    alert("Vui lòng chọn phương thức giao hàng.");
+                    return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: '/Order/CreateFromCart',
+                data: {
+                    Address: address,
+                    ShippingMethod: shippingMethod
+                },
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        window.location.href = '/Order/MyOrders';
+                    } else {
+                        alert(response.message || 'Có lỗi xảy ra khi đặt hàng.');
+                    }
+                },
+                error: function (xhr) {
+                    const res = xhr.responseJSON;
+                    alert(res?.message || 'Lỗi máy chủ, vui lòng thử lại sau.');
+                }
+            });
+        });
     });
 </script>
-
-

@@ -1,6 +1,7 @@
 ﻿@{
     Layout = "_Layout.cshtml";
 }
+<!--Nhập địa chỉ nhận hàng-->
 <div class="container mt-1">
     <div class="row">
         <div class="text-lg-start mt-2 mb-1">
@@ -34,6 +35,7 @@
         </div>
     </form>
 </div>
+<!--Xem chi tiết đơn hàng-->
 <div class="container mt-1">
     <div class="row">
         <div class="text-lg-start mt-2 mb-1">
@@ -56,7 +58,7 @@
             <!-- Xử lý phần thông tin món ăn ở đây -->
         </tbody>
     </table>
-    <h5 class="mt-4">Phương thức giao hàng</h5>
+    <h4 class="mt-4">Phương thức giao hàng</h4>
     <div class="btn-group" role="group" aria-label="Phương thức giao hàng">
         <button type="button" class="btn btn-outline-primary" id="btnPriority">
             Ưu tiên: < 20 phút - <span class="price">50,000 VND</span>
@@ -68,7 +70,8 @@
             Tiết kiệm: 30 phút - <span class="price">30,000 VND</span>
         </button>
     </div>
-    <h5 class="mt-4">Khuyến mãi</h5>
+
+    <h4 class="mt-4">Khuyến mãi</h4>
     <div class="mb-3">
         <input type="text" class="form-control" id="promoCode" placeholder="Nhập mã khuyến mãi" />
         <button type="button" class="btn btn-info mt-2" id="applyPromoBtn">Áp dụng mã</button>
