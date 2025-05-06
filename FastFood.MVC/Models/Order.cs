@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace FastFood.MVC.Models
 {
@@ -7,6 +8,7 @@ namespace FastFood.MVC.Models
     { 
         Pending,    //Mới tạo đơn
         Processing, //Đang xử lý
+        Prepared,  //Đã chuẩn bị
         Delivering, //Đang giao
         Completed,  //Đã hoàn tất
         Cancelled   //Đã hủy
@@ -29,9 +31,11 @@ namespace FastFood.MVC.Models
 
         public int? EmployeeID { get; set; }
         public virtual Employee? Employee { get; set; }
-        public string Address { get; set; }
+        public string? Address { get; set; }
 		public ShippingMethod ShippingMethod { get; set; }
-		public decimal ShippingFee { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal ShippingFee { get; set; }
 
 		[Column(TypeName = "decimal(18,2)")]
         public decimal? TotalCharge { get; set; }
@@ -41,6 +45,7 @@ namespace FastFood.MVC.Models
 
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new HashSet<OrderDetail>();
 
+        [Column(TypeName = "decimal(18,2)")]
         public decimal SubTotal { get; set; }
 		public decimal GetShippingFee()
 		{
@@ -54,10 +59,6 @@ namespace FastFood.MVC.Models
 		}
 		public void CalculateTotalCharge()
         {
-			foreach (var detail in OrderDetails)
-			{
-				detail.CalculatePrices();
-			}
 			ShippingFee = GetShippingFee();
             SubTotal = OrderDetails.Sum(od => od.SubTotal);
             TotalCharge = SubTotal + ShippingFee;

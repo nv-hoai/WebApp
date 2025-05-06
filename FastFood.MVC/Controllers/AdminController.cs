@@ -1,5 +1,6 @@
 ﻿using FastFood.MVC.Data;
 using FastFood.MVC.Models;
+using FastFood.MVC.Services;
 using FastFood.MVC.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -21,6 +22,7 @@ namespace FastFood.MVC.Controllers
         private readonly ILogger<AdminController> _logger;
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _context;
+        private readonly IDashboardService _dashboardService;
 
         public AdminController(
             UserManager<ApplicationUser> userManager,
@@ -28,7 +30,8 @@ namespace FastFood.MVC.Controllers
             SignInManager<ApplicationUser> signInManager,
             ILogger<AdminController> logger,
             IEmailSender emailSender,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IDashboardService dashboardService)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -37,6 +40,7 @@ namespace FastFood.MVC.Controllers
             _logger = logger;
             _emailSender = emailSender;
             _context = context;
+            _dashboardService = dashboardService;
         }
         [Route("Accounts")]
         public async Task<IActionResult> Index()
@@ -65,10 +69,13 @@ namespace FastFood.MVC.Controllers
 
             return View(model);
         }
-        public IActionResult Dashboard()
+
+        public async Task<IActionResult> Dashboard()
         {
-            return View(); 
+            var viewModel = await _dashboardService.GetDashboardDataAsync();
+            return View(viewModel);
         }
+
         [HttpPost]
         [Route("Accounts/Register")]
         public async Task<IActionResult> Register(UserViewModel model)
