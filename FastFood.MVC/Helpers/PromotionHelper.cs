@@ -26,7 +26,7 @@ namespace FastFood.MVC.Helpers
 			return discounted;
 		}
 
-		public static decimal GetSubtotal (decimal unitPrice, int quantity, Promotion?promotion)
+		public static decimal GetSubtotal (decimal unitPrice, int quantity, Promotion? promotion)
 		{
 			var discountedPrice = GetDiscountedPrice(unitPrice, promotion);
 			return discountedPrice * quantity;

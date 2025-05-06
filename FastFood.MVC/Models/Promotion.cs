@@ -37,6 +37,6 @@ namespace FastFood.MVC.Models
         public int RequiredQuantity { get; set; } = 1;
 
         [JsonIgnore]
-        public OrderDetail? OrderDetail { get; set; }
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new HashSet<OrderDetail>();
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace FastFood.MVC.Models
 {
@@ -13,6 +14,15 @@ namespace FastFood.MVC.Models
         public ApplicationUser(string userName) : base(userName)
         {
         }
+
+        [Required]
+        [MaxLength(100)]
+        public string FullName { get; set; } = string.Empty;
+
+        [MaxLength(100)]
+        public string? Address { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual ICollection<ApplicationUserClaim> Claims { get; set; } = new HashSet<ApplicationUserClaim>();
         public virtual ICollection<ApplicationUserLogin> Logins { get; set; } = new HashSet<ApplicationUserLogin>();

@@ -9,9 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using NuGet.Protocol.Plugins;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FastFood.MVC.Controllers
 {
+	[Authorize]
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -28,14 +30,13 @@ namespace FastFood.MVC.Controllers
 		{
 			var cart = await _context.CartItems
 									.Include(c => c.Product)
-									.Where(c => c.CustomerID == CustomerID)
+                                    .Where(c => c.CustomerID == CustomerID)
 									.ToListAsync(); 
 			return cart;
 		}
 
         //Hiển thị giỏ hàng sau khi đăng nhập
         [HttpGet]
-        [Authorize(Policy = "CustomerAccess")]
         public async Task<IActionResult> Index()
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -51,12 +52,51 @@ namespace FastFood.MVC.Controllers
 			}
 
 			var cart = await GetCartAsync(customer.CustomerID);
-			return View(cart);
+            return View(cart);
 		}
+
+        // Get details of a specific cart item
+        public async Task<IActionResult> Details(int productID)
+        {
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
+
+            if (customer == null)
+            {
+                return RedirectToPage("/Account/Login", new
+                {
+                    area = "Identity",
+                    returnUrl = Url.Action("Index", "Cart")
+                });
+            }
+
+            var cartItem = await _context.CartItems
+                .Include(c => c.Product)
+                .Include(c => c.Promotion)
+                .FirstOrDefaultAsync(c => c.CustomerID == customer.CustomerID && c.ProductID == productID);
+
+            if (cartItem == null)
+            {
+                TempData["CartError"] = "Không tìm thấy sản phẩm trong giỏ hàng!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Load available promotions for dropdown
+            ViewBag.PromotionID = new SelectList(
+                await _context.Promotions
+                    .Where(p => p.ProductID == productID || p.CategoryID == cartItem.Product.CategoryID)
+                    .ToListAsync(),
+                "PromotionID",
+                "Name",
+                cartItem.PromotionID
+            );
+
+            return View(cartItem);
+        }
+
 
         //Thêm sản phẩm vào giỏ
         [HttpPost]
-        [Authorize(Policy = "CustomerAccess")]
         public async Task<IActionResult> AddToCart(int productID, int quantity = 1)
         {
 			if (quantity < 1)
@@ -105,12 +145,6 @@ namespace FastFood.MVC.Controllers
 			}
             else
             {
-                var promotion = await _context.Promotions.FirstOrDefaultAsync
-                (
-                        p => p.ProductID == productID && 
-                             p.CategoryID == product.CategoryID
-                );
-
                 var cartItem = new CartItem
                 {
                     CustomerID = customer.CustomerID,
@@ -118,14 +152,11 @@ namespace FastFood.MVC.Controllers
                     ProductName = product.Name,
                     UnitPrice = product.Price,
                     Quantity = quantity,
-                    PromotionID = promotion?.PromotionID,
-                    PromotionName = promotion?.Name,
-					CreatedAt = DateTime.Now,
-					Product = product
+                    CreatedAt = DateTime.Now,
 				};
 
 				cartItem.Calculate();
-				await _context.CartItems.AddAsync(cartItem);
+                await _context.CartItems.AddAsync(cartItem);
 
 			}
             await _context.SaveChangesAsync();
@@ -137,8 +168,56 @@ namespace FastFood.MVC.Controllers
 			});
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ApplyPromotion(int productID, int? promotionID)
+        {
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
+
+            if (customer == null)
+            {
+                return RedirectToPage("/Account/Login", new
+                {
+                    area = "Identity",
+                    returnUrl = Url.Action("Details", "Cart", new { productID })
+                });
+            }
+
+            var cartItem = await _context.CartItems
+                .Include(c => c.Product)
+                .FirstOrDefaultAsync(c => c.CustomerID == customer.CustomerID && c.ProductID == productID);
+
+            if (cartItem == null)
+            {
+                TempData["CartError"] = "Không tìm thấy sản phẩm trong giỏ hàng!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Update promotion
+            if (promotionID.HasValue)
+            {
+                var promotion = await _context.Promotions.FindAsync(promotionID.Value);
+                cartItem.PromotionID = promotionID;
+                cartItem.PromotionName = promotion?.Name;
+				cartItem.Promotion = promotion;
+            }
+            else
+            {
+                cartItem.PromotionID = null;
+                cartItem.PromotionName = null;
+				cartItem.Promotion = null;
+            }
+
+            // Recalculate prices
+            cartItem.Calculate();
+            _context.Update(cartItem);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã cập nhật khuyến mãi cho sản phẩm!";
+            return RedirectToAction(nameof(Details), new { productID });
+        }
+
         //Xóa sản phẩm khỏi giỏ
-        [Authorize (Policy = "CustomerAccess")]
         public async Task<IActionResult> RemoveFromCart(int productID)
         {
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -181,7 +260,6 @@ namespace FastFood.MVC.Controllers
 
 		//Cập nhật số lượng sản phẩm
 		[HttpPost]
-		[Authorize(Policy = "CustomerAccess")]
 		public async Task<IActionResult> UpdateCart(int productID, int quantity)
 		{
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -236,7 +314,6 @@ namespace FastFood.MVC.Controllers
 		}
 
 		//Xóa giỏ hàng
-		[Authorize(Policy = "CustomerAccess")]
 		public async Task<IActionResult> ClearCart()
         {
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);

@@ -1,7 +1,16 @@
 ﻿@model FastFood.MVC.Models.Product
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 
 @{
-    Layout = "_Layout.cshtml";
+    if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+    {
+        Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    }
+    else
+    {
+        Layout = "_Layout.cshtml";
+    }
 }
 
 <div>
@@ -41,6 +50,14 @@
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.ProductID">Sửa</a> |
-    <a asp-action="Index" asp-route-category="@Model?.Category.Name">Quay lại</a>
+    
+    @if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+    {
+        <a asp-action="Edit" asp-route-id="@Model?.ProductID">Sửa</a>
+        <a asp-action="Index" asp-route-category="@Model?.Category.Name" >Quay lại</a>
+    }
+    else
+    {
+        <a asp-action="Index" asp-route-activeIndex="@Model?.Category.CategoryID">Quay lại</a>
+    }
 </div>

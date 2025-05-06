@@ -1,5 +1,13 @@
 ﻿@using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+	<a asp-controller="Order" asp-action="Index" class="nav-item nav-link active">Đơn hàng</a>
+}
 
 @if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
 {

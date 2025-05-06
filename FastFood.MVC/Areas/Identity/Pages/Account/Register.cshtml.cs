@@ -85,6 +85,10 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             [Required]
+            [Display(Name = "Full Name")]
+            public string FullName { get; set; } = string.Empty;
+
+            [Required]
             [Phone]
             [Display(Name = "Phone number")]
             public string Phone { get; set; }
@@ -129,6 +133,7 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 user.PhoneNumber = Input.Phone;
+                user.FullName = Input.FullName;
 
                 if (result.Succeeded)
                 {

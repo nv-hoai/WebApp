@@ -18,16 +18,16 @@ namespace FastFood.MVC.Models
 
 		public int? PromotionID { get; set; }
 		public string? PromotionName { get; set; }
-		public virtual Promotion? Promotion { get; set; } = null!;
+		public virtual Promotion? Promotion { get; set; }
 
 		[Column(TypeName = "decimal(18,2)")]
-		public decimal DiscountedUnitPrice { get; set; }
+		public decimal DiscountedPrice { get; set; }
 		[Column(TypeName = "decimal(18,2)")]
 		public decimal SubTotal { get; set; }
 
 		public void CalculatePrices()
 		{
-			DiscountedUnitPrice = PromotionHelper.GetDiscountedPrice(UnitPrice, Promotion);
+			DiscountedPrice = PromotionHelper.GetDiscountedPrice(UnitPrice, Promotion);
 			SubTotal = PromotionHelper.GetSubtotal(UnitPrice, Quantity, Promotion);
 		}
 	}

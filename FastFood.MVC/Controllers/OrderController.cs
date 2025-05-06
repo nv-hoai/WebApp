@@ -25,19 +25,52 @@ namespace FastFood.MVC.Controllers
 
         public async Task<IActionResult> Index()
         {
-            if ((await _authorization.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
+            // For Admin and Employee: Show all orders
+            if ((await _authorization.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
             {
                 var managementOrders = await _context.Orders
                     .Include(o => o.Customer)
+                        .ThenInclude(c => c.User)
                     .Include(o => o.Employee)
+                        .ThenInclude(e => e.User)
                     .Include(o => o.Shipper)
+                        .ThenInclude(s => s.User)
+                    .OrderByDescending(o => o.CreatedAt)
                     .ToListAsync();
                 return View(managementOrders.AsEnumerable());
             }
 
+            // For Shipper: Show only orders that are Prepared or ones they are delivering
+            if ((await _authorization.AuthorizeAsync(User, "ShipperAccess")).Succeeded)
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userId);
+
+                if (shipper == null)
+                {
+                    return NotFound("Shipper profile not found");
+                }
+
+                var shipperOrders = await _context.Orders
+                    .Include(o => o.Customer)
+                        .ThenInclude(c => c.User)
+                    .Include(o => o.Employee)
+                        .ThenInclude(e => e.User)
+                    .Include(o => o.Shipper)
+                        .ThenInclude(e => e.User)
+                    .Where(o => o.Status == OrderStatus.Prepared ||
+                               (o.Status == OrderStatus.Delivering && o.ShipperID == shipper.ShipperID))
+                    .OrderByDescending(o => o.CreatedAt)
+                    .ToListAsync();
+
+                return View(shipperOrders.AsEnumerable());
+            }
+
+            // For Customer: Show their own orders
             var customerOrders = await _context.Orders
                 .Include(o => o.Customer)
                 .Where(o => o.Customer.UserID == User.FindFirstValue(ClaimTypes.NameIdentifier))
+                .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
             return View(customerOrders.AsEnumerable());
@@ -50,32 +83,89 @@ namespace FastFood.MVC.Controllers
                 return NotFound();
             }
 
-            var order = await _context.Orders
+            // For Admin, Employee: Can view any order details
+            if ((await _authorization.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
+            {
+                var managementOrder = await _context.Orders
+                    .Include(o => o.Customer)
+                        .ThenInclude(c => c.User)
+                    .Include(o => o.Employee)
+                        .ThenInclude(e => e.User)
+                    .Include(o => o.Shipper)
+                        .ThenInclude(s => s.User)
+                    .Include(o => o.OrderDetails)
+                        .ThenInclude(o => o.Product)
+                    .FirstOrDefaultAsync(o => o.OrderID == id);
+
+                if (managementOrder == null)
+                {
+                    return NotFound();
+                }
+
+                return View(managementOrder);
+            }
+
+            // For Shipper: Can view orders they're delivering or that are ready for pickup (Processing)
+            if ((await _authorization.AuthorizeAsync(User, "ShipperAccess")).Succeeded)
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userId);
+
+                if (shipper == null)
+                {
+                    return NotFound("Shipper profile not found");
+                }
+
+                var shipperOrder = await _context.Orders
+                    .Include(o => o.Customer)
+                        .ThenInclude(c => c.User)
+                    .Include(o => o.Employee)
+                        .ThenInclude(e => e.User)
+                    .Include(o => o.Shipper)
+                        .ThenInclude(e => e.User)
+                    .Include(o => o.OrderDetails)
+                        .ThenInclude(o => o.Product)
+                    .FirstOrDefaultAsync(o => o.OrderID == id &&
+                                          (o.Status == OrderStatus.Processing ||
+                                          (o.Status == OrderStatus.Delivering && o.ShipperID == shipper.ShipperID)));
+
+                if (shipperOrder == null)
+                {
+                    return NotFound("Order not found or you don't have permission to view it");
+                }
+
+                return View(shipperOrder);
+            }
+
+            // For Customer: Can only view their own orders
+            var customerOrder = await _context.Orders
                 .Include(o => o.Customer)
-                .Include(o => o.Employee)
-                .Include(o => o.Shipper)
-                .FirstOrDefaultAsync(m => m.OrderID == id);
-            if (order == null)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(o => o.Product)
+                .FirstOrDefaultAsync(o => o.Customer.UserID == User.FindFirstValue(ClaimTypes.NameIdentifier) && o.OrderID == id);
+
+            if (customerOrder == null)
             {
                 return NotFound();
             }
 
-            return View(order);
+            return View(customerOrder);
         }
 
-        [Authorize(Policy = "AdminOrEmployeeAccess")]
+        [Authorize(Policy = "AdminAccess")]
         public IActionResult Create()
         {
+            Order model = new Order();
             ViewData["CustomerID"] = new SelectList(_context.Customers, "CustomerID", "CustomerID");
             ViewData["EmployeeID"] = new SelectList(_context.Employees, "EmployeeID", "EmployeeID");
             ViewData["ShipperID"] = new SelectList(_context.Shippers, "ShipperID", "ShipperID");
-            return View();
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "AdminOrEmployeeAccess")]
-        public async Task<IActionResult> Create([Bind("OrderID,CustomerID,ShipperID,EmployeeID,TotalCharge,Status,CreatedAt,CompletedAt")] Order order)
+        [Authorize(Policy = "AdminAccess")]
+        public async Task<IActionResult> Create(Order order)
         {
             if (ModelState.IsValid)
             {
@@ -89,7 +179,7 @@ namespace FastFood.MVC.Controllers
             return View(order);
         }
 
-        [Authorize(Policy = "OrderManagementAcess")]
+        [Authorize(Policy = "AdminAccess")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -110,8 +200,8 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "OrderManagementAcess")]
-        public async Task<IActionResult> Edit(int id, [Bind("OrderID,CustomerID,ShipperID,EmployeeID,TotalCharge,Status,CreatedAt,CompletedAt")] Order order)
+        [Authorize(Policy = "AdminAccess")]
+        public async Task<IActionResult> Edit(int id, Order order)
         {
             if (id != order.OrderID)
             {
@@ -187,8 +277,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "CustomerAccess")]
-		public async Task<IActionResult> CreateFromCart(String Address, ShippingMethod ShippingMethod)
+		public async Task<IActionResult> CreateFromCart(string Address, ShippingMethod ShippingMethod)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
@@ -202,8 +291,12 @@ namespace FastFood.MVC.Controllers
 				});
 			}
 
-            var carts = await _context.CartItems.Where(c => c.CustomerID == customer.CustomerID).ToListAsync();
-			if (carts == null || !carts.Any())
+            var carts = await _context.CartItems
+                                    .Include(c => c.Promotion)
+                                    .Where(c => c.CustomerID == customer.CustomerID)
+                                    .ToListAsync();
+
+            if (carts == null || !carts.Any())
             {
 				return Json(new 
                 { 
@@ -225,11 +318,6 @@ namespace FastFood.MVC.Controllers
             //Tạo chi tiết đơn hàng
             foreach(var item in carts)
             {
-                var product = await _context.Products
-                    .Include(p => p.Category)
-                    .FirstOrDefaultAsync(p => p.ProductID == item.ProductID);
-				if (product == null) continue;
-
 				var orderDetail = new OrderDetail
 				{
                     OrderID = order.OrderID,
@@ -237,38 +325,13 @@ namespace FastFood.MVC.Controllers
                     ProductName = item.ProductName,
                     UnitPrice = item.UnitPrice,
 					Quantity = item.Quantity,
-				};
+                    PromotionID = item.PromotionID,
+                    PromotionName = item.PromotionName,
+                    Promotion = item.Promotion,
+                };
 
-                Promotion? promo = null;
-                if (item.PromotionID.HasValue)
-                {
-                    promo = await _context.Promotions
-                        .FirstOrDefaultAsync(p => p.PromotionID == item.PromotionID.Value
-                                                && p.StartDate <= DateTime.Now
-                                                && p.ExpiryDate >= DateTime.Now);
-                }
-                else
-                {
-                    promo = await _context.Promotions
-                        .Where(p => (p.ProductID == product.ProductID || p.CategoryID == product.CategoryID)
-                        && p.StartDate <= DateTime.Now
-                        && p.ExpiryDate >= DateTime.Now)
-                        .OrderByDescending(p => p.DiscountPercent)
-                        .FirstOrDefaultAsync();
-				}
-
-                orderDetail.PromotionID = promo?.PromotionID;
                 orderDetail.CalculatePrices();
                 order.OrderDetails.Add(orderDetail);
-			}
-
-			if (!order.OrderDetails.Any())
-			{
-				return Json(new 
-                { 
-                    success = false, 
-                    message = "Không có sản phẩm hợp lệ trong giỏ hàng." 
-                });
 			}
 
 			order.CalculateTotalCharge();
@@ -279,106 +342,173 @@ namespace FastFood.MVC.Controllers
 
 			return Json(new 
             { 
-                success = true, 
-                orderId = order.OrderID 
+                success = true
             });
 		}
 
-		[Authorize(Policy = "CustomerAccess")]
-		public async Task<IActionResult> Cancel(int orderID)
-		{
-			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-
-			if (customer == null)
-			{
-				return Json(new { success = false, message = "Bạn chưa đăng nhập." });
-			}
-
-			var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.CustomerID == customer.CustomerID);
-
-			if (order == null)
-			{
-				return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID}." });
-			}
-
-			if (order.Status != OrderStatus.Pending)
-			{
-				return Json(new
-				{
-					success = false,
-					message = $"Không thể hủy đơn hàng #{orderID} vì trạng thái không phải 'Mới tạo'."
-				});
-			}
-
-			order.Status = OrderStatus.Cancelled;
-
-			await _context.SaveChangesAsync();
-
-			return Json(new
-			{
-				success = true,
-				message = $"Đơn hàng #{orderID} đã được hủy."
-			});
-		}
-
-		[Authorize(Policy = "CustomerAccess")] 
-        public async Task<IActionResult> MyOrders()
+        // AJAX endpoint for cancelling an order
+        [HttpPost]
+        public async Task<IActionResult> Cancel(int orderID)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
+            Order? order = null;
 
-			if (customer == null)
-			{
-				return RedirectToPage("/Account/Login", new
-				{
-					area = "Identity",
-					returnUrl = Url.Action("MyOrders", "Order")
-				});
-			}
-
-			var orders = await _context.Orders
-		        .Where(o => o.CustomerID == customer.CustomerID)
-		        .Include(o => o.OrderDetails)
-		        .OrderByDescending(o => o.CreatedAt)
-		        .ToListAsync();
-
-            foreach (var order in orders)
+            // Admin or Employee can cancel any order
+            if ((await _authorization.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
             {
-                order.CalculateTotalCharge();
+                order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID);
+                if (order == null)
+                {
+                    return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID}." });
+                }
+                order.Status = OrderStatus.Cancelled;
+                await _context.SaveChangesAsync();
+                return Json(new
+                {
+                    success = true,
+                    message = $"Đơn hàng #{orderID} đã được hủy."
+                });
             }
 
-			return View(orders);
+            // Customers can only cancel their own orders in Pending state
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
+            if (customer == null)
+            {
+                return Json(new { success = false, message = "Bạn chưa đăng nhập." });
+            }
+
+            order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.CustomerID == customer.CustomerID);
+
+            if (order == null)
+            {
+                return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID}." });
+            }
+
+            if (order.Status != OrderStatus.Pending)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Không thể hủy đơn hàng #{orderID} vì trạng thái không phải 'Mới tạo'."
+                });
+            }
+
+            order.Status = OrderStatus.Cancelled;
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = $"Đơn hàng #{orderID} đã được hủy."
+            });
         }
 
-		[Authorize(Policy = "CustomerAccess")]
-		public async Task<IActionResult> MyOrderDetails(int OrderID)
-		{
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userId);
+        [HttpPost]
+        [Authorize(Policy = "EmployeeAccess")]
+        public async Task<IActionResult> AcceptOrder(int orderID)
+        {
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserID == userID);
 
-			if (customer == null)
-			{
-				return RedirectToPage("/Account/Login", new
-				{
-					area = "Identity",
-					returnUrl = Url.Action("MyOrderDetails", "Order", new { OrderID })
-				});
-			}
+            if (employee == null)
+            {
+                return Json(new { success = false, message = "Employee profile not found" });
+            }
 
-			var order = await _context.Orders
-				.Include(o => o.OrderDetails)
-					.ThenInclude(od => od.Product)
-				.FirstOrDefaultAsync(o => o.OrderID == OrderID && o.CustomerID == customer.CustomerID);
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Pending);
 
-			if (order == null)
-			{
-				return NotFound();
-			}
+            if (order == null)
+            {
+                return Json(new { success = false, message = $"Order #{orderID} not found or is not in Pending state" });
+            }
 
-			order.CalculateTotalCharge(); // Tính lại nếu cần
-			return View(order);
-		}
+            // Assign the employee to the order and update status
+            order.EmployeeID = employee.EmployeeID;
+            order.Status = OrderStatus.Processing;
 
-	}
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = $"Order #{orderID} has been accepted and is now being processed" });
+        }
+
+        // Employee marks order as ready for delivery: Processing -> Prepared
+        [HttpPost]
+        [Authorize(Policy = "EmployeeAccess")]
+        public async Task<IActionResult> MarkAsPrepared(int orderID)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Processing);
+
+            if (order == null)
+            {
+                return Json(new { success = false, message = $"Order #{orderID} not found or is not in Processing state" });
+            }
+
+            // Update status
+            order.Status = OrderStatus.Prepared;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = $"Order #{orderID} is now ready for delivery" });
+        }
+
+        // Shipper accepts the order for delivery: Prepared -> Delivering
+        [HttpPost]
+        [Authorize(Policy = "ShipperAccess")]
+        public async Task<IActionResult> AcceptDelivery(int orderID)
+        {
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userID);
+
+            if (shipper == null)
+            {
+                return Json(new { success = false, message = "Shipper profile not found" });
+            }
+
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Prepared);
+
+            if (order == null)
+            {
+                return Json(new { success = false, message = $"Order #{orderID} not found or is not ready for delivery" });
+            }
+
+            // Assign the shipper to the order and update status
+            order.ShipperID = shipper.ShipperID;
+            order.Status = OrderStatus.Delivering;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = $"You have accepted order #{orderID} for delivery" });
+        }
+
+        // Shipper marks the order as delivered: Delivering -> Completed
+        [HttpPost]
+        [Authorize(Policy = "ShipperAccess")]
+        public async Task<IActionResult> MarkAsDelivered(int orderID)
+        {
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userID);
+
+            if (shipper == null)
+            {
+                return Json(new { success = false, message = "Shipper profile not found" });
+            }
+
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID &&
+                                                               o.Status == OrderStatus.Delivering &&
+                                                               o.ShipperID == shipper.ShipperID);
+
+            if (order == null)
+            {
+                return Json(new { success = false, message = $"Order #{orderID} not found or not assigned to you for delivery" });
+            }
+
+            // Update status and completion time
+            order.Status = OrderStatus.Completed;
+            order.CompletedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = $"Order #{orderID} has been marked as delivered" });
+        }
+    }
 }

@@ -1,4 +1,7 @@
-﻿@{
+﻿@using FastFood.MVC.Models
+@model FastFood.MVC.ViewModels.DashboardViewModel
+
+@{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
@@ -13,7 +16,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h5 class="card-title">Đơn hàng hôm nay</h5>
-                        <h3>56</h3>
+                        <h3>@Model.TodayOrdersCount</h3>
                     </div>
                     <div class="card-icon fs-2"><i class="fas fa-shopping-cart"></i></div>
                 </div>
@@ -26,7 +29,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h5 class="card-title">Doanh thu</h5>
-                        <h3>15,200,000₫</h3>
+                        <h3>@Model.TotalRevenue</h3>
                     </div>
                     <div class="card-icon fs-2"><i class="fas fa-money-bill"></i></div>
                 </div>
@@ -39,7 +42,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h5 class="card-title">Khách mới</h5>
-                        <h3>12</h3>
+                        <h3>@Model.NewCustomersCount</h3>
                     </div>
                     <div class="card-icon fs-2"><i class="fas fa-user-plus"></i></div>
                 </div>
@@ -52,7 +55,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h5 class="card-title">Món bán chạy</h5>
-                        <h6>Gà rán phô mai</h6>
+                        <h6>@Model.TopSellingProductName</h6>
                     </div>
                     <div class="card-icon fs-2"><i class="fas fa-hamburger"></i></div>
                 </div>
@@ -88,20 +91,17 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>#1234</td>
-                    <td>Nguyễn Văn A</td>
-                    <td>10:30 AM</td>
-                    <td>300,000₫</td>
-                    <td><span class="badge bg-success">Hoàn tất</span></td>
-                </tr>
-                <tr>
-                    <td>#1235</td>
-                    <td>Trần Thị B</td>
-                    <td>11:00 AM</td>
-                    <td>250,000₫</td>
-                    <td><span class="badge bg-warning">Đang giao</span></td>
-                </tr>
+				@for (int i = 0; i < Model.RecentOrders.Count; i++)
+				{
+					var order = Model.RecentOrders[i];
+					<tr>
+						<td>@order.OrderID</td>
+						<td>@order.CustomerName</td>
+						<td>@order.OrderTime.ToString("hh:mm tt")</td>
+						<td>@order.TotalAmount.ToString("N0")₫</td>
+						<td><span class="badge bg-@(order.Status ==  OrderStatus.Completed ? "success" : "warning")">@order.Status</span></td>
+					</tr>
+				})
             </tbody>
         </table>
     </div>
@@ -114,10 +114,10 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'],
+                labels: [@Html.Raw(string.Join(",", Model.Last7DaysRevenue.Select(d => $"'{d.Date.ToString("ddd")}'").ToArray()))],
                 datasets: [{
                     label: 'Doanh thu (VND)',
-                    data: [2200000, 1900000, 2500000, 1800000, 3000000, 2800000, 3200000],
+                    data: [@string.Join(",", Model.Last7DaysRevenue.Select(d => d.Revenue).ToArray())],
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     fill: true,
@@ -128,10 +128,36 @@
                 responsive: true,
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return value.toLocaleString('vi-VN') + ' ₫';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('vi-VN', {
+                                        style: 'currency',
+                                        currency: 'VND',
+                                        maximumFractionDigits: 0
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
                     }
                 }
             }
         });
     </script>
 }
+

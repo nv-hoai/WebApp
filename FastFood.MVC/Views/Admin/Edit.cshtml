@@ -13,9 +13,7 @@
         <form id="editForm" asp-action="Edit" asp-controller="Admin" method="post">
             <hr />
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="mb-3">
-                <input class="form-control" type="hidden" name="oldEmail" id="userEmail"/>
-            </div>
+            <input type="hidden" name="oldEmail" value="@Model.Email" />
             <div class="mb-3">
                 <label asp-for="Email"></label>
                 <input asp-for="Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
@@ -46,11 +44,6 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        $(function () {
-			$('#userEmail').val('@Model.Email');
-        });
-    </script>
 }
 
 

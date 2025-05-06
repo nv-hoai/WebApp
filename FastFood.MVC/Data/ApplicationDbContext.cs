@@ -96,7 +96,7 @@ namespace FastFood.MVC.Data
                     .OnDelete(DeleteBehavior.Cascade); // Delete OrderDetails if Order is deleted
 
                 od.HasOne(od => od.Promotion)
-                    .WithMany()
+                    .WithMany(p => p.OrderDetails)
                     .HasForeignKey(od => od.PromotionID)
                     .OnDelete(DeleteBehavior.NoAction); // Promotions are reusable, avoid cascade
             });
@@ -149,7 +149,7 @@ namespace FastFood.MVC.Data
 
                 c.HasOne(ci => ci.Customer)
                     .WithMany(c => c.CartItems)
-                .HasForeignKey(ci => ci.CustomerID)
+                    .HasForeignKey(ci => ci.CustomerID)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 c.HasOne(ci => ci.Product)
