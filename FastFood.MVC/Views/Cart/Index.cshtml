@@ -136,153 +136,156 @@
     </div>
 </div>
 
-@Html.AntiForgeryToken()
-<script>
-    $(document).ready(function () {
-        $('.btn-increase, .btn-decrease').click(function () {
-            var button = $(this);
-            var row = button.closest('tr');
-            var productID = button.data('productid');
+@section Scripts
+{
+    @Html.AntiForgeryToken()
+    <script>
+        $(document).ready(function () {
+            $('.btn-increase, .btn-decrease').click(function () {
+                var button = $(this);
+                var row = button.closest('tr');
+                var productID = button.data('productid');
 
-            var currentQty = parseInt(row.find('.item-quantity').text());
-            var quantity = button.hasClass('btn-increase') ? currentQty + 1 : currentQty - 1;
+                var currentQty = parseInt(row.find('.item-quantity').text());
+                var quantity = button.hasClass('btn-increase') ? currentQty + 1 : currentQty - 1;
 
-            $.ajax({
-                type: 'POST',
-                url: '/Cart/UpdateCart',
-                data: { productID: productID, quantity: quantity },
-                success: function (response) {
-                    if (response.success) {
-                        if (quantity <= 0) {
-                            row.remove();
+                $.ajax({
+                    type: 'POST',
+                    url: '/Cart/UpdateCart',
+                    data: { productID: productID, quantity: quantity },
+                    success: function (response) {
+                        if (response.success) {
+                            if (quantity <= 0) {
+                                row.remove();
+                            } else {
+                                row.find('.item-quantity').text(quantity);
+                                var priceText = row.find('td').eq(4).text().replace(/[^\d]/g, '');
+                                var price = parseInt(priceText) || 0;
+                                var subtotal = price * quantity;
+                                row.find('.item-subtotal').text(subtotal.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
+                            }
+                            updateTotal();
                         } else {
-                            row.find('.item-quantity').text(quantity);
-                            var priceText = row.find('td').eq(4).text().replace(/[^\d]/g, '');
-                            var price = parseInt(priceText) || 0;
-                            var subtotal = price * quantity;
-                            row.find('.item-subtotal').text(subtotal.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
+                            alert(response.message || "Có lỗi xảy ra khi cập nhật giỏ hàng.");
                         }
-                        updateTotal();
-                    } else {
-                        alert(response.message || "Có lỗi xảy ra khi cập nhật giỏ hàng.");
+                    },
+                    error: function () {
+                        alert("Có lỗi xảy ra khi cập nhật giỏ hàng.");
                     }
-                },
-                error: function () {
-                    alert("Có lỗi xảy ra khi cập nhật giỏ hàng.");
-                }
+                });
             });
-        });
 
-        $('.btn-delete').click(function (e) {
-            e.preventDefault();
-            let button = $(this);
-            let productId = button.data('productid');
-            let productName = button.closest('tr').find('td').eq(1).text().trim();
+            $('.btn-delete').click(function (e) {
+                e.preventDefault();
+                let button = $(this);
+                let productId = button.data('productid');
+                let productName = button.closest('tr').find('td').eq(1).text().trim();
 
-            if (!confirm('Bạn có chắc muốn xóa món "' + productName + '" khỏi giỏ hàng?')) return;
+                if (!confirm('Bạn có chắc muốn xóa món "' + productName + '" khỏi giỏ hàng?')) return;
 
-            $.ajax({
-                url: '/Cart/RemoveFromCart',
-                method: 'POST',
-                data: { productID: productId },
-                success: function (response) {
-                    if (response.success) {
-                        button.closest('tr').remove();
-                        updateTotal();
-                    } else {
-                        alert(response.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
+                $.ajax({
+                    url: '/Cart/RemoveFromCart',
+                    method: 'POST',
+                    data: { productID: productId },
+                    success: function (response) {
+                        if (response.success) {
+                            button.closest('tr').remove();
+                            updateTotal();
+                        } else {
+                            alert(response.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
+                        }
+                    },
+                    error: function () {
+                        alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
                     }
-                },
-                error: function () {
-                    alert('Không thể xóa sản phẩm. Vui lòng thử lại.');
-                }
-            });
-        });
-
-        function updateTotal() {
-            let total = 0;
-            $('#cartItems tr').each(function () {
-                let subtotalText = $(this).find('.item-subtotal').text().replace(/[^\d]/g, '');
-                let subtotal = parseInt(subtotalText) || 0;
-                total += subtotal;
+                });
             });
 
-            let shippingFee = parseInt($('#shippingFee').text().replace(/[^\d]/g, '')) || 0;
-            let totalCharge = total + shippingFee;
+            function updateTotal() {
+                let total = 0;
+                $('#cartItems tr').each(function () {
+                    let subtotalText = $(this).find('.item-subtotal').text().replace(/[^\d]/g, '');
+                    let subtotal = parseInt(subtotalText) || 0;
+                    total += subtotal;
+                });
 
-            $('#totalAmount').text(total.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
-            $('#totalCharge').text(totalCharge.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
-        }
+                let shippingFee = parseInt($('#shippingFee').text().replace(/[^\d]/g, '')) || 0;
+                let totalCharge = total + shippingFee;
 
-        $('#btnPriority, #btnFast, #btnEconomical').click(function () {
-            var shippingFee = parseInt($(this).data('shippingfee')) || 0;
-            $('#shippingFee').text(shippingFee.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
-            updateTotal();
-        });
-
-        $('#clearCartBtn').click(function () {
-            if (!confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) return;
-
-            $.ajax({
-                type: 'POST',
-                url: '/Cart/ClearCart',
-                success: function (response) {
-                    if (response.success) {
-                        $('#cartItems').empty();
-                        $('#totalAmount').text('0 VND');
-                        $('#totalCharge').text('0 VND');
-                        $('#shippingFee').text('0 VND');
-                        alert('Giỏ hàng đã được xóa.');
-                    }
-                },
-                error: function () {
-                    alert('Đã có lỗi xảy ra khi xóa giỏ hàng.');
-                }
-            });
-        });
-
-        $('#checkoutBtn').click(function () {
-            const address = $('#addressInput').val().trim();
-            if (!address) {
-                alert("Vui lòng nhập địa chỉ giao hàng.");
-                return;
+                $('#totalAmount').text(total.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
+                $('#totalCharge').text(totalCharge.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
             }
 
-            const shippingFeeText = $('#shippingFee').text().replace(/[^\d]/g, '');
-            const shippingFee = parseInt(shippingFeeText) || 0;
+            $('#btnPriority, #btnFast, #btnEconomical').click(function () {
+                var shippingFee = parseInt($(this).data('shippingfee')) || 0;
+                $('#shippingFee').text(shippingFee.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
+                updateTotal();
+            });
 
-            let shippingMethod;
-            switch (shippingFee) {
-                case 50000: shippingMethod = 0; break; // Ưu tiên
-                case 40000: shippingMethod = 1; break; // Nhanh
-                case 30000: shippingMethod = 2; break; // Tiết kiệm
-                default:
-                    alert("Vui lòng chọn phương thức giao hàng.");
+            $('#clearCartBtn').click(function () {
+                if (!confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) return;
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Cart/ClearCart',
+                    success: function (response) {
+                        if (response.success) {
+                            $('#cartItems').empty();
+                            $('#totalAmount').text('0 VND');
+                            $('#totalCharge').text('0 VND');
+                            $('#shippingFee').text('0 VND');
+                            alert('Giỏ hàng đã được xóa.');
+                        }
+                    },
+                    error: function () {
+                        alert('Đã có lỗi xảy ra khi xóa giỏ hàng.');
+                    }
+                });
+            });
+
+            $('#checkoutBtn').click(function () {
+                const address = $('#addressInput').val().trim();
+                if (!address) {
+                    alert("Vui lòng nhập địa chỉ giao hàng.");
                     return;
-            }
-
-            $.ajax({
-                type: 'POST',
-                url: '/Order/CreateFromCart',
-                data: {
-                    Address: address,
-                    ShippingMethod: shippingMethod
-                },
-                headers: {
-                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                },
-                success: function (response) {
-                    if (response.success) {
-                        window.location.href = '/Order/Index';
-                    } else {
-                        alert(response.message || 'Có lỗi xảy ra khi đặt hàng.');
-                    }
-                },
-                error: function (xhr) {
-                    const res = xhr.responseJSON;
-                    alert(res?.message || 'Lỗi máy chủ, vui lòng thử lại sau.');
                 }
+
+                const shippingFeeText = $('#shippingFee').text().replace(/[^\d]/g, '');
+                const shippingFee = parseInt(shippingFeeText) || 0;
+
+                let shippingMethod;
+                switch (shippingFee) {
+                    case 50000: shippingMethod = 0; break; // Ưu tiên
+                    case 40000: shippingMethod = 1; break; // Nhanh
+                    case 30000: shippingMethod = 2; break; // Tiết kiệm
+                    default:
+                        alert("Vui lòng chọn phương thức giao hàng.");
+                        return;
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Order/CreateFromCart',
+                    data: {
+                        Address: address,
+                        ShippingMethod: shippingMethod
+                    },
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            window.location.href = '/Order/Index';
+                        } else {
+                            alert(response.message || 'Có lỗi xảy ra khi đặt hàng.');
+                        }
+                    },
+                    error: function (xhr) {
+                        const res = xhr.responseJSON;
+                        alert(res?.message || 'Lỗi máy chủ, vui lòng thử lại sau.');
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
+}

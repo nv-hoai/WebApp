@@ -29,14 +29,14 @@
             <div class="col-md-6">
                 <dl class="row">
                     <dt class="col-sm-4">Khách hàng:</dt>
-                    <dd class="col-sm-8">@(Model.Customer?.User?.UserName ?? "N/A")</dd>
-                    
+                    <dd class="col-sm-8">@(Model.Customer?.User?.FullName ?? "N/A")</dd>
+
                     <dt class="col-sm-4">Địa chỉ:</dt>
                     <dd class="col-sm-8">@Model.Address</dd>
-                    
+
                     <dt class="col-sm-4">Phương thức vận chuyển:</dt>
                     <dd class="col-sm-8">@GetShippingMethodDisplayName(Model.ShippingMethod)</dd>
-                    
+
                     <dt class="col-sm-4">Phí vận chuyển:</dt>
                     <dd class="col-sm-8">@Model.ShippingFee.ToString("N0") VND</dd>
                 </dl>
@@ -45,13 +45,16 @@
                 <dl class="row">
                     <dt class="col-sm-4">Ngày tạo đơn:</dt>
                     <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
-                    
-                    <dt class="col-sm-4">Nhân viên xử lý:</dt>
-                    <dd class="col-sm-8">@(Model.Employee?.User?.UserName ?? "Chưa có")</dd>
-                    
-                    <dt class="col-sm-4">Người giao hàng:</dt>
-                    <dd class="col-sm-8">@(Model.Shipper?.User?.UserName ?? "Chưa có")</dd>
-                    
+
+                    @if ((await AuthorizationService.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
+                    {
+                        <dt class="col-sm-4">Nhân viên xử lý:</dt>
+                        <dd class="col-sm-8">@(Model.Employee?.User?.FullName ?? "Chưa có")</dd>
+
+                        <dt class="col-sm-4">Người giao hàng:</dt>
+                        <dd class="col-sm-8">@(Model.Shipper?.User?.FullName ?? "Chưa có")</dd>
+                    }
+
                     @if (Model.CompletedAt.HasValue)
                     {
                         <dt class="col-sm-4">Ngày hoàn thành:</dt>
@@ -62,6 +65,53 @@
         </div>
     </div>
 </div>
+
+@if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Khuyến mãi áp dụng</h5>
+        </div>
+        <div class="card-body">
+            @{
+                var usedPromotions = Model.OrderDetails
+                .Where(od => od.PromotionID.HasValue)
+                .Select(od => od.Promotion)
+                .Distinct()
+                .ToList();
+            }
+
+            @if (usedPromotions.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Tên khuyến mãi</th>
+                                <th>Mô tả</th>
+                                <th>Phần trăm giảm</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var promo in usedPromotions)
+                            {
+                                <tr>
+                                    <td>@promo?.Name</td>
+                                    <td>@promo?.Description</td>
+                                    <td>@(promo?.DiscountPercent * 100)%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">Không có khuyến mãi nào được áp dụng cho đơn hàng này.</div>
+            }
+        </div>
+    </div>
+}
 
 <div class="card mb-4">
     <div class="card-header">

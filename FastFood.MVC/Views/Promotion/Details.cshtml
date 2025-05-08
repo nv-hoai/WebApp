@@ -3,7 +3,14 @@
 @model FastFood.MVC.Models.Promotion
 
 @{
-    Layout = "_Layout.cshtml";
+    if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+    {
+        Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    }
+    else
+    {
+        Layout = "_Layout.cshtml";
+    }
 }
 
 <div>

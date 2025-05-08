@@ -14,6 +14,11 @@ namespace FastFood.MVC.ViewModels
         public string Email { get; set; } = string.Empty;
 
         [Required]
+        [StringLength(50, ErrorMessage = "The name must be at least 2 and at max 50 characters long.")]
+        [Display(Name = "Họ và tên")]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required]
         [DataType(DataType.PhoneNumber)]
         [Display(Name = "Số điện thoại")]
         public string PhoneNumber { get; set; } = string.Empty;

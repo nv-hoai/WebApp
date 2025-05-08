@@ -56,6 +56,7 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("AdminAccess", policy => policy.RequireRole("Admin"))
     .AddPolicy("EmployeeAccess", policy => policy.RequireRole("Employee"))
     .AddPolicy("ShipperAccess", policy => policy.RequireRole("Shipper"))
+    .AddPolicy("CustomerAccess", policy => policy.RequireRole("Customer"))
     .AddPolicy("AdminOrEmployeeAccess", policy =>
         policy.RequireRole("Admin", "Employee"))
     .AddPolicy("OrderManagementAccess", policy =>

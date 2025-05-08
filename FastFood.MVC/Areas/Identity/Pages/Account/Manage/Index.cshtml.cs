@@ -58,19 +58,25 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account.Manage
             /// </summary>
             [Phone]
             [Display(Name = "Phone number")]
+            [Required]
             public string PhoneNumber { get; set; }
+
+            [Required]
+            [Display(Name = "Fullname")]
+            public string FullName { get; set; }
         }
 
         private async Task LoadAsync(ApplicationUser user)
         {
             var userName = await _userManager.GetUserNameAsync(user);
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-
+            
             Username = userName;
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                FullName = user.FullName
             };
         }
 
@@ -98,6 +104,17 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account.Manage
             {
                 await LoadAsync(user);
                 return Page();
+            }
+
+            if (Input.FullName != user.FullName)
+            {
+                user.FullName = Input.FullName;
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    StatusMessage = "Unexpected error when trying to update user profile.";
+                    return RedirectToPage();
+                }
             }
 
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);

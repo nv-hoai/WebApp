@@ -6,8 +6,6 @@ using FastFood.MVC.Models;
 using FastFood.MVC.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
 namespace FastFood.MVC.Controllers
 {
@@ -59,7 +57,8 @@ namespace FastFood.MVC.Controllers
                     .Include(o => o.Shipper)
                         .ThenInclude(e => e.User)
                     .Where(o => o.Status == OrderStatus.Prepared ||
-                               (o.Status == OrderStatus.Delivering && o.ShipperID == shipper.ShipperID))
+                               ((o.Status == OrderStatus.Delivering || o.Status == OrderStatus.Completed) 
+                                    && o.ShipperID == shipper.ShipperID))
                     .OrderByDescending(o => o.CreatedAt)
                     .ToListAsync();
 
@@ -69,6 +68,7 @@ namespace FastFood.MVC.Controllers
             // For Customer: Show their own orders
             var customerOrders = await _context.Orders
                 .Include(o => o.Customer)
+                    .ThenInclude(c => c.User)
                 .Where(o => o.Customer.UserID == User.FindFirstValue(ClaimTypes.NameIdentifier))
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
@@ -95,6 +95,8 @@ namespace FastFood.MVC.Controllers
                         .ThenInclude(s => s.User)
                     .Include(o => o.OrderDetails)
                         .ThenInclude(o => o.Product)
+                    .Include(o => o.OrderDetails)
+                        .ThenInclude(o => o.Promotion)
                     .FirstOrDefaultAsync(o => o.OrderID == id);
 
                 if (managementOrder == null)
@@ -140,6 +142,7 @@ namespace FastFood.MVC.Controllers
             // For Customer: Can only view their own orders
             var customerOrder = await _context.Orders
                 .Include(o => o.Customer)
+                    .ThenInclude(c => c.User)
                 .Include(o => o.OrderDetails)
                     .ThenInclude(o => o.Product)
                 .FirstOrDefaultAsync(o => o.Customer.UserID == User.FindFirstValue(ClaimTypes.NameIdentifier) && o.OrderID == id);
@@ -348,6 +351,7 @@ namespace FastFood.MVC.Controllers
 
         // AJAX endpoint for cancelling an order
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int orderID)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -374,7 +378,7 @@ namespace FastFood.MVC.Controllers
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
             if (customer == null)
             {
-                return Json(new { success = false, message = "Bạn chưa đăng nhập." });
+                return Json(new { success = false, message = "Bạn không có quyền thực hiện chức năng này" });
             }
 
             order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.CustomerID == customer.CustomerID);
@@ -389,7 +393,7 @@ namespace FastFood.MVC.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = $"Không thể hủy đơn hàng #{orderID} vì trạng thái không phải 'Mới tạo'."
+                    message = $"Không thể hủy đơn hàng #{orderID}."
                 });
             }
 
@@ -404,16 +408,12 @@ namespace FastFood.MVC.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Policy = "EmployeeAccess")]
         public async Task<IActionResult> AcceptOrder(int orderID)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserID == userID);
-
-            if (employee == null)
-            {
-                return Json(new { success = false, message = "Employee profile not found" });
-            }
 
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Pending);
 
@@ -423,7 +423,7 @@ namespace FastFood.MVC.Controllers
             }
 
             // Assign the employee to the order and update status
-            order.EmployeeID = employee.EmployeeID;
+            order.EmployeeID = employee!.EmployeeID;
             order.Status = OrderStatus.Processing;
 
             await _context.SaveChangesAsync();
@@ -433,6 +433,7 @@ namespace FastFood.MVC.Controllers
 
         // Employee marks order as ready for delivery: Processing -> Prepared
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Policy = "EmployeeAccess")]
         public async Task<IActionResult> MarkAsPrepared(int orderID)
         {
@@ -453,16 +454,12 @@ namespace FastFood.MVC.Controllers
 
         // Shipper accepts the order for delivery: Prepared -> Delivering
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Policy = "ShipperAccess")]
         public async Task<IActionResult> AcceptDelivery(int orderID)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userID);
-
-            if (shipper == null)
-            {
-                return Json(new { success = false, message = "Shipper profile not found" });
-            }
 
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Prepared);
 
@@ -472,7 +469,7 @@ namespace FastFood.MVC.Controllers
             }
 
             // Assign the shipper to the order and update status
-            order.ShipperID = shipper.ShipperID;
+            order.ShipperID = shipper!.ShipperID;
             order.Status = OrderStatus.Delivering;
 
             await _context.SaveChangesAsync();
@@ -482,24 +479,35 @@ namespace FastFood.MVC.Controllers
 
         // Shipper marks the order as delivered: Delivering -> Completed
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [Authorize(Policy = "ShipperAccess")]
         public async Task<IActionResult> MarkAsDelivered(int orderID)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userID);
 
-            if (shipper == null)
-            {
-                return Json(new { success = false, message = "Shipper profile not found" });
-            }
-
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID &&
                                                                o.Status == OrderStatus.Delivering &&
-                                                               o.ShipperID == shipper.ShipperID);
-
+                                                               o.ShipperID == shipper!.ShipperID);
+            
             if (order == null)
             {
                 return Json(new { success = false, message = $"Order #{orderID} not found or not assigned to you for delivery" });
+            }
+
+
+            var orderDetails = await _context.OrderDetails
+                .Include(od => od.Product)
+                .Where(od => od.OrderID == orderID)
+                .ToListAsync();
+
+            foreach (var orderDetail in orderDetails)
+            {
+                var product = await _context.Products.FindAsync(orderDetail.ProductID);
+                if (product != null)
+                {
+                    product.SoldQuantity += orderDetail.Quantity;
+                }
             }
 
             // Update status and completion time

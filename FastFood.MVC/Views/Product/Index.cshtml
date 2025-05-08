@@ -146,41 +146,43 @@ else
         }
     </div>
 }
-@Html.AntiForgeryToken()
 
-<script>
-    function addToCart(productID, quantity = 1) {
-        const token = $('input[name="__RequestVerificationToken"]').val();
+@section Scripts
+{
+    @Html.AntiForgeryToken()
+    <script>
+        function addToCart(productID, quantity = 1) {
+            const token = $('input[name="__RequestVerificationToken"]').val();
 
-        $.ajax({
-            type: "POST",
-            url: '/Cart/AddToCart',
-            data: {
-                productID: productID,
-                quantity: quantity,
-                __RequestVerificationToken: token
-            },
-            success: function (response) {
-                console.log(response); 
-
-                if (response.redirectUrl) {
-                    window.location.href = response.redirectUrl;
-                    return;
-                }
-
-                if (response.success) {
-                    alert(response.message || "Đã thêm vào giỏ hàng!");
-                    if (typeof updateCartBadge === "function") {
-                        updateCartBadge(); 
+            $.ajax({
+                type: "POST",
+                url: '/Cart/AddToCart',
+                data: {
+                    productID: productID,
+                    quantity: quantity,
+                    __RequestVerificationToken: token
+                },
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message || "Đã thêm vào giỏ hàng!");
+                        if (typeof updateCartBadge === "function") {
+                            updateCartBadge(); 
+                        }
+                    } else {
+                        alert(response.message || "Đã xảy ra lỗi.");
                     }
-                } else {
-                    alert(response.message || "Đã xảy ra lỗi.");
+                },
+                error: function (xhr, status, error) {
+                    if (xhr.status === 401) {
+                        if (confirm("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng. Đăng nhập ngay?")) {
+                            window.location.href = '/Identity/Account/Login?ReturnUrl=' + encodeURIComponent(window.location.pathname);
+                        }
+                    } else {
+                        alert("Lỗi khi thêm vào giỏ hàng.");
+                        console.error("Error details:", error);
+                    }
                 }
-            },
-            error: function () {
-                alert("Lỗi khi thêm vào giỏ hàng.");
-            }
-        });
-    }
-</script>
-
+            });
+        }
+    </script>
+}

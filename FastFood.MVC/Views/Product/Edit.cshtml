@@ -1,4 +1,4 @@
-﻿@model FastFood.MVC.Models.Product
+﻿@model FastFood.MVC.ViewModels.ProductViewModel
 
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -8,7 +8,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="ProductID" />
             <div class="form-group">
@@ -32,9 +32,13 @@
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="ImageUrl" class="control-label"></label>
-                <input asp-for="ImageUrl" class="form-control" />
-                <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                <label class="control-label">Ảnh hiện tại</label>
+                <img class="w-25" src="@Model.ImageUrl" alt="" />
+            </div>
+            <div class="form-group">
+                <label class="control-label">Ảnh mới</label>
+                <input asp-for="ImageFile" class="form-control" />
+                <span asp-validation-for="ImageFile" class="text-danger"></span>
             </div>
             <br />
             <div class="form-group d-flex justify-content-between">

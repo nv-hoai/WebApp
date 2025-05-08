@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FastFood.MVC.Controllers
 {
-	[Authorize]
+	[Authorize(Policy = "CustomerAccess")]
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -41,17 +41,7 @@ namespace FastFood.MVC.Controllers
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-
-			if (customer == null)
-			{
-				return RedirectToPage("/Account/Login", new
-				{
-					area = "Identity",
-					returnUrl = Url.Action("Index", "Cart")
-				});
-			}
-
-			var cart = await GetCartAsync(customer.CustomerID);
+			var cart = await GetCartAsync(customer!.CustomerID);
             return View(cart);
 		}
 
@@ -60,15 +50,6 @@ namespace FastFood.MVC.Controllers
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-
-            if (customer == null)
-            {
-                return RedirectToPage("/Account/Login", new
-                {
-                    area = "Identity",
-                    returnUrl = Url.Action("Index", "Cart")
-                });
-            }
 
             var cartItem = await _context.CartItems
                 .Include(c => c.Product)
@@ -97,6 +78,7 @@ namespace FastFood.MVC.Controllers
 
         //Thêm sản phẩm vào giỏ
         [HttpPost]
+		[ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToCart(int productID, int quantity = 1)
         {
 			if (quantity < 1)
@@ -110,20 +92,6 @@ namespace FastFood.MVC.Controllers
 
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-
-            if (customer == null)
-            {
-				return Json(new
-				{
-					success = false,
-					redirectUrl = Url.Page("/Account/Login", new
-					{
-						area = "Identity",
-						returnUrl = Url.Action("Index", "Product")
-					}),
-					message = "Bạn cần đăng nhập để thêm sản phẩm vào giỏ."
-				});
-			}
             
             var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductID == productID);
             if (product == null)
@@ -174,15 +142,6 @@ namespace FastFood.MVC.Controllers
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
 
-            if (customer == null)
-            {
-                return RedirectToPage("/Account/Login", new
-                {
-                    area = "Identity",
-                    returnUrl = Url.Action("Details", "Cart", new { productID })
-                });
-            }
-
             var cartItem = await _context.CartItems
                 .Include(c => c.Product)
                 .FirstOrDefaultAsync(c => c.CustomerID == customer.CustomerID && c.ProductID == productID);
@@ -222,20 +181,6 @@ namespace FastFood.MVC.Controllers
         {
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID); 
-            
-            if (customer == null)
-            {
-				return Json(new
-				{
-					success = false,
-					redirectUrl = Url.Page("/Account/Login", new
-					{
-						area = "Identity",
-						returnUrl = Url.Action("Index", "Product")
-					}),
-					message = "Bạn cần đăng nhập để xóa sản phẩm khỏi giỏ."
-				});
-			}
 
             var carts = await GetCartAsync(customer.CustomerID);
             var cartItem = carts.FirstOrDefault(ci => ci.ProductID == productID);
@@ -264,20 +209,6 @@ namespace FastFood.MVC.Controllers
 		{
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-
-			if (customer == null)
-			{
-				return Json(new
-				{
-					success = false,
-					redirectUrl = Url.Page("/Account/Login", new
-					{
-						area = "Identity",
-						returnUrl = Url.Action("Index", "Product")
-					}),
-					message = "Bạn cần đăng nhập để cập nhật giỏ hàng."
-				});
-			}
 
 			var carts = await GetCartAsync(customer.CustomerID);
 			var cartItem = carts.FirstOrDefault(ci => ci.ProductID == productID);
@@ -318,20 +249,6 @@ namespace FastFood.MVC.Controllers
         {
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-
-			if (customer == null)
-			{
-				return Json(new
-				{
-					success = false,
-					redirectUrl = Url.Page("/Account/Login", new
-					{
-						area = "Identity",
-						returnUrl = Url.Action("Index", "Product")
-					}),
-					message = "Bạn cần đăng nhập để cập nhật giỏ hàng."
-				});
-			}
 
 			var carts = await GetCartAsync(customer.CustomerID);
 

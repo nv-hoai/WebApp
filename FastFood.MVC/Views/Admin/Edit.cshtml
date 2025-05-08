@@ -20,6 +20,11 @@
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="mb-3">
+                <label asp-for="FullName"></label>
+                <input asp-for="FullName" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
                 <label asp-for="PhoneNumber"></label>
                 <input asp-for="PhoneNumber" class="form-control" autocomplete="tel" aria-required="true" placeholder="0123456789" />
                 <span asp-validation-for="PhoneNumber" class="text-danger"></span>
