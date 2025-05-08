@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FastFood.MVC.ViewModels
 {
-    public class ProductCreateViewModel
+    public class ProductViewModel
     {
         public int ProductID { get; set; }
         public int CategoryID { get; set; }
@@ -21,6 +21,9 @@ namespace FastFood.MVC.ViewModels
 
         [Display(Name = "Ảnh")]
         public IFormFile? ImageFile { get; set; }
+
+        [Display(Name = "Ảnh")]
+        public string? ImageUrl { get; set; }
 
         [Display(Name = "Số lượng đã bán")]
         public int SoldQuantity { get; set; } = 0;

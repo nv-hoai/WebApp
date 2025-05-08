@@ -46,7 +46,7 @@
                                 <td>@Html.DisplayFor(Model=>item.OrderID)</td>
                                 <td>@Html.DisplayFor(Model => item.TotalCharge)</td>
                                 <td>
-                                    @Html.DisplayNameFor(model => model.Status)
+                                    <span class="badge @GetStatusBadgeClass(item.Status)">@GetStatusDisplayName(item.Status)</span>
                                 </td>
                                 <td>@Html.DisplayFor(Model => item.CreatedAt)</td>
                                 <td>@Html.DisplayFor(Model => item.CompletedAt)</td>
@@ -74,8 +74,12 @@ else
             <tr>
                 <th>ID</th>
                 <th>Khách hàng</th>
-                <th>Nhân viên</th>
-                <th>Người giao</th>
+                @if ((await AuthorizationService.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
+                {
+                    
+                    <th>Nhân viên</th>
+                    <th>Người giao</th>
+                }
                 <th>Địa chỉ</th>
                 <th>Trạng thái</th>
                 <th>Tổng tiền</th>
@@ -88,9 +92,13 @@ else
             {
                 <tr class="order-row" data-order-id="@item.OrderID" data-order-status="@item.Status">
                     <td>@item.OrderID</td>
-                    <td>@(item.Customer?.User?.UserName ?? "N/A")</td>
-                    <td>@(item.Employee?.User?.UserName ?? "N/A")</td>
-                    <td>@(item.Shipper?.User?.UserName ?? "N/A")</td>
+                    <td>@(item.Customer?.User?.FullName ?? "N/A")</td>
+                    @if ((await AuthorizationService.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
+                    {
+                        <td>@(item.Employee?.User?.FullName ?? "N/A")</td>
+                        <td>@(item.Shipper?.User?.FullName ?? "N/A")</td>
+                    }
+
                     <td>@item.Address</td>
                     <td>
                         <span class="badge @GetStatusBadgeClass(item.Status)">@GetStatusDisplayName(item.Status)</span>

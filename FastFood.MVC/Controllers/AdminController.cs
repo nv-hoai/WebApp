@@ -12,7 +12,6 @@ using Microsoft.IdentityModel.Tokens;
 namespace FastFood.MVC.Controllers
 {
     [Authorize(Policy = "AdminAccess")]
-    [Route("Admin/Management")]
     public class AdminController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -53,7 +52,8 @@ namespace FastFood.MVC.Controllers
                 {
                     x.User.Email,
                     x.User.PhoneNumber,
-                    x.Role.Name
+                    x.Role.Name,
+                    x.User.FullName
                 }).ToListAsync();
 
 
@@ -63,7 +63,8 @@ namespace FastFood.MVC.Controllers
                     Index = index + 1,  // Start from 1 instead of 0
                     Email = user.Email!,
                     PhoneNumber = user.PhoneNumber!,
-                    RoleName = user.Name!
+                    RoleName = user.Name!,
+                    FullName = user.FullName!
                 })
                 .AsEnumerable();
 
@@ -89,6 +90,7 @@ namespace FastFood.MVC.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
 
                 user.PhoneNumber = model.PhoneNumber;
+                user.FullName = model.FullName;
 
                 if (result.Succeeded)
                 {
@@ -147,8 +149,8 @@ namespace FastFood.MVC.Controllers
                 {
                     Email = x.User.Email!,
                     PhoneNumber = x.User.PhoneNumber!,
-                    RoleName = x.Role.Name!
-
+                    RoleName = x.Role.Name!,
+                    FullName = x.User.FullName!
                 })
                 .FirstOrDefaultAsync(x => x.Email == email);
 
@@ -178,6 +180,9 @@ namespace FastFood.MVC.Controllers
 
                 if (model.PhoneNumber != user.PhoneNumber)
                     user.PhoneNumber = model.PhoneNumber;
+
+                if (model.FullName != user.FullName)
+                    user.FullName = model.FullName;
 
                 var currentRoles = await _userManager.GetRolesAsync(user);
 

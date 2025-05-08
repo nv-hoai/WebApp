@@ -11,6 +11,6 @@
 
 @if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
 {
-	<a asp-controller="Admin" asp-action="Index" class="nav-item nav-link active">Quản lí</a>
+	<a asp-controller="Admin" asp-action="DashBoard" class="nav-item nav-link active">Quản lí</a>
 }
 

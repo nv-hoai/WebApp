@@ -82,14 +82,14 @@ namespace FastFood.MVC.Controllers
         public IActionResult Create()
         {
             ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name");
-            ProductCreateViewModel model = new ProductCreateViewModel();
+            ProductViewModel model = new ProductViewModel();
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Create(ProductCreateViewModel model)
+        public async Task<IActionResult> Create(ProductViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -130,22 +130,58 @@ namespace FastFood.MVC.Controllers
             {
                 return NotFound();
             }
+
+            ProductViewModel model = new ProductViewModel()
+            {
+                ProductID = product.ProductID,
+                Name = product.Name,
+                CategoryID = product.CategoryID,
+                Description = product.Description,
+                Price = product.Price,
+                ImageUrl = product.ImageUrl,
+                IsNew = product.IsNew,
+                IsCarouselItem = product.IsCarouselItem,
+                IsPopular = product.IsPopular
+            };
+
             ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name", product.CategoryID);
-            return View(product);
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "AdminAccess")]
-        public async Task<IActionResult> Edit(int id, Product product)
+        public async Task<IActionResult> Edit(int id, ProductViewModel model)
         {
-            if (id != product.ProductID)
+            if (id != model.ProductID)
             {
                 return NotFound();
             }
 
             if (ModelState.IsValid)
             {
+
+                Product product = new Product()
+                {
+                    ProductID = model.ProductID,
+                    Name = model.Name,
+                    CategoryID = model.CategoryID,
+                    Description = model.Description,
+                    Price = model.Price,
+                    IsNew = model.IsNew,
+                    IsCarouselItem = model.IsCarouselItem,
+                    IsPopular = model.IsPopular
+                };
+
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    product.ImageUrl = await _blobService.UploadFileAsync(model.ImageFile);
+                }
+                else
+                {
+                    product.ImageUrl = model.ImageUrl;
+                }
+
                 try
                 {
                     _context.Update(product);
@@ -164,8 +200,8 @@ namespace FastFood.MVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name", product.CategoryID);
-            return View(product);
+            ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name", model.CategoryID);
+            return View(model);
         }
 
         [Authorize(Policy = "AdminAccess")]
