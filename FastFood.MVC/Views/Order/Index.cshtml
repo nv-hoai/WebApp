@@ -6,7 +6,7 @@
     var viCulture = CultureInfo.GetCultureInfo("vi-VN");
 }
 
-@if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+@if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeOrShipperAccess")).Succeeded)
 {
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     <h1 class="display-5 mb-4">Quản lý đơn hàng</h1>
