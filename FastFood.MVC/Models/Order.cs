@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace FastFood.MVC.Models
 {
@@ -41,7 +42,13 @@ namespace FastFood.MVC.Models
         public decimal? TotalCharge { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime? ProcessingAt { get; set; }
+        public DateTime? PreparedAt { get; set; }
+        public DateTime? DeliveringAt { get; set; }
+        public DateTime? CancelledAt { get; set; }
         public DateTime? CompletedAt { get; set; }
+
+        public string? Note { get; set; }
 
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new HashSet<OrderDetail>();
 

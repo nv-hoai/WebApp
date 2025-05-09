@@ -170,17 +170,22 @@ else
 }
 
 @section Scripts {
+    @Html.AntiForgeryToken()
     <script>
         $(document).ready(function() {
             // Handle Accept Order button (Employee)
             $(".btn-accept-order").click(function() {
                 var orderID = $(this).data("id");
+                var token = $('input[name="__RequestVerificationToken"]').val();
                 
                 if (confirm("Bạn muốn nhận đơn hàng #" + orderID + "?")) {
                     $.ajax({
                         url: '@Url.Action("AcceptOrder")',
                         type: 'POST',
-                        data: { orderID: orderID },
+                        data: { 
+                            orderID: orderID,
+                            __RequestVerificationToken: token
+                        },
                         success: function(result) {
                             if (result.success) {
                                 alert(result.message);
@@ -199,12 +204,16 @@ else
             // Handle Mark as Prepared button (Employee)
             $(".btn-mark-prepared").click(function() {
                 var orderID = $(this).data("id");
+                var token = $('input[name="__RequestVerificationToken"]').val();
                 
                 if (confirm("Xác nhận đơn hàng #" + orderID + " đã được chuẩn bị xong?")) {
                     $.ajax({
                         url: '@Url.Action("MarkAsPrepared")',
                         type: 'POST',
-                        data: { orderID: orderID },
+                        data: {
+                            orderID: orderID,
+                            __RequestVerificationToken: token
+                        },
                         success: function(result) {
                             if (result.success) {
                                 alert(result.message);
@@ -223,12 +232,16 @@ else
             // Handle Accept Delivery button (Shipper)
             $(".btn-accept-delivery").click(function() {
                 var orderID = $(this).data("id");
+                var token = $('input[name="__RequestVerificationToken"]').val();
                 
                 if (confirm("Bạn muốn nhận giao đơn hàng #" + orderID + "?")) {
                     $.ajax({
                         url: '@Url.Action("AcceptDelivery")',
                         type: 'POST',
-                        data: { orderID: orderID },
+                        data: {
+                            orderID: orderID,
+                            __RequestVerificationToken: token
+                        },
                         success: function(result) {
                             if (result.success) {
                                 alert(result.message);
@@ -247,12 +260,16 @@ else
             // Handle Mark as Delivered button (Shipper)
             $(".btn-mark-delivered").click(function() {
                 var orderID = $(this).data("id");
+                var token = $('input[name="__RequestVerificationToken"]').val();
                 
                 if (confirm("Xác nhận đơn hàng #" + orderID + " đã được giao thành công?")) {
                     $.ajax({
                         url: '@Url.Action("MarkAsDelivered")',
                         type: 'POST',
-                        data: { orderID: orderID },
+                        data: {
+                            orderID: orderID,
+                            __RequestVerificationToken: token
+                        },
                         success: function(result) {
                             if (result.success) {
                                 alert(result.message);
@@ -271,12 +288,17 @@ else
             // Handle Cancel Order button
             $(".btn-cancel-order").click(function() {
                 var orderID = $(this).data("id");
+                var token = $('input[name="__RequestVerificationToken"]').val();
+
                 
                 if (confirm("Bạn có chắc muốn hủy đơn hàng #" + orderID + "?")) {
                     $.ajax({
                         url: '@Url.Action("Cancel")',
                         type: 'POST',
-                        data: { orderID: orderID },
+                        data: {
+                            orderID: orderID,
+                            __RequestVerificationToken: token
+                        },
                         success: function(result) {
                             if (result.success) {
                                 alert(result.message);
