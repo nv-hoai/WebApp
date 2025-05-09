@@ -1,13 +1,21 @@
-﻿@{
-    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout !=  null)
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+
+@{
+    var isAdmin = (await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded;
+    var isEmployee = (await AuthorizationService.AuthorizeAsync(User, "EmployeeAccess")).Succeeded;
+    var isShipper = (await AuthorizationService.AuthorizeAsync(User, "ShipperAccess")).Succeeded;
+
+    if (isAdmin || isEmployee || isShipper)
     {
-        Layout = parentLayout.ToString();
+        Layout = "/Views/Shared/_AdminLayout.cshtml";
     }
     else
     {
-        Layout = "/Areas/Identity/Pages/_Layout.cshtml";
+        Layout = "/Views/Shared/_IdentityLayout.cshtml";
     }
 }
+
 
 <h1>Manage your account</h1>
 
