@@ -1,11 +1,12 @@
 ﻿@inject IAuthorizationService AuthorizationService
 @using Microsoft.AspNetCore.Authorization
 
-@if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
-{  
-    Layout = "_AdminLayout";   
+@if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeOrShipperAccess")).Succeeded)
+{
+    Layout = "_AdminLayout.cshtml";
 }
 else
 {
-    Layout = "_Layout";
+    Layout = "_Layout.cshtml";
 }
+
