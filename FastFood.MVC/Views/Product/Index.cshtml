@@ -164,9 +164,15 @@ else
                 },
                 success: function (response) {
                     if (response.success) {
+                        $('#cartCount')
+                            .fadeOut(100, function () {
+                                $(this).text(response.cartCount).fadeIn(100);
+                            });
+
                         alert(response.message || "Đã thêm vào giỏ hàng!");
+
                         if (typeof updateCartBadge === "function") {
-                            updateCartBadge(); 
+                            updateCartBadge();
                         }
                     } else {
                         alert(response.message || "Đã xảy ra lỗi.");
@@ -184,5 +190,16 @@ else
                 }
             });
         }
+
+        function updateCartBadge() {
+            fetch('/Cart/GetCartCount')
+                .then(res => res.json())
+                .then(data => {
+                    $('#cartCount').fadeOut(100, function () {
+                        $(this).text(data.count).fadeIn(100);
+                    });
+                });
+        }
     </script>
 }
+
