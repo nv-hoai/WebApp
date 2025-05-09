@@ -76,16 +76,26 @@
                     <a asp-controller="Home" asp-action="Contact" class="nav-item nav-link active">Liên hệ</a>
                 </div>
                 <div class="d-none d-lg-flex ms-2">
-
+                    @if (User.IsInRole("Customer"))
+                    {
+                        <a class="btn-sm-square bg-white rounded-circle ms-3 position-relative" asp-controller="Cart" asp-action="Index">
+                            <small class="fa fa-shopping-bag text-body"></small>
+                            <span class="cart-badge" id="cartCount">0</span>
+                        </a>
+                        <a class="btn-sm-square bg-white rounded-circle ms-3 position-relative" asp-controller="Notification" asp-action="Index">
+                            <small class="fa fa-bell text-body"></small>
+                            <span class="cart-badge" id="notificationCount">0</span>
+                        </a>
+                    }
                     @* Login section *@
                     <div class="dropdown ms-3">
                         <a class="btn-sm-square bg-white rounded-circle"
-                           href="#"
-                           role="button"
-                           id="userDropdown"
-                           data-bs-toggle="dropdown"
-                           aria-expanded="false"
-                           data-bs-auto-close="outside">
+                        href="#"
+                        role="button"
+                        id="userDropdown"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        data-bs-auto-close="outside">
                             <small class="fa fa-user text-body"></small>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -93,10 +103,6 @@
                         </ul>
                     </div>
                     @* End login section *@
-                    <a class="btn-sm-square bg-white rounded-circle ms-3 position-relative" asp-controller="Cart" asp-action="Index">
-                        <small class="fa fa-shopping-bag text-body"></small>
-                        <span class="cart-badge" id="cartCount">@ViewBag.CartCount</span>
-                    </a>
                 </div>
             </div>
         </nav>
@@ -157,3 +163,16 @@
     <script src="~/js/main.js"></script>
 </body>
 </html>
+<script>
+    function updateCartCount() {
+        fetch('/Cart/GetCartCount')
+            .then(res => res.json())
+            .then(data => {
+                const countEl = document.getElementById('cartCount');
+                if (countEl) {
+                    countEl.textContent = data.count;
+                }
+            });
+    }
+    document.addEventListener('DOMContentLoaded', updateCartCount);
+</script>
