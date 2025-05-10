@@ -140,10 +140,21 @@
                 <!-- Top Navbar -->
                 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
                     <div class="container-fluid">
-                        <span class="navbar-brand mb-0 h5">Xin chào!</span>
+                        @{
+                            var hour = DateTime.Now.Hour;
+                            var greeting = hour < 12 ? "Chào buổi sáng!" :
+                            hour < 18 ? "Chào buổi chiều!" :
+                            "Chào buổi tối!";
+                        }
+                        <span class="navbar-brand mb-0 h5">@greeting</span>
                         <div class="d-flex align-items-center">
+                            <a class="btn-sm-square bg-white rounded-circle ms-3 position-relative" asp-controller="Notification" asp-action="Index">
+                                <small class="fa fa-bell text-body"></small>
+                                <span class="notification-badge" id="notificationCount">0</span>
+                            </a>
                             <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage"> 
-                                <small class="fa fa-user text-body"></small></a>
+                                <small class="fa fa-user text-body"></small>
+                            </a>
                         </div>
                     </div>
                 </nav>
