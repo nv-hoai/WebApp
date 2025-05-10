@@ -656,3 +656,20 @@
 .nav-link.active {
     color: #c04b2c !important;
 }
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: red;
+    color: white;
+    font-size: 12px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 50%;
+    font-weight: bold;
+}
+.card-body {
+    min-height: 107px;
+}
