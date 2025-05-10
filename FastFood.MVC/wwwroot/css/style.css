@@ -672,4 +672,13 @@
 }
 .card-body {
     min-height: 107px;
+    border-radius: 10px;
+    border: none;
+}
+.custom-card-radius {
+    border-radius: 50px 0 50px 0; 
+}
+.custom-radius-img {
+    border-radius: 0 0 50px 0; 
+    object-fit: cover;
 }
