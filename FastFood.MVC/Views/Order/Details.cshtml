@@ -54,12 +54,36 @@
                         <dt class="col-sm-4">Người giao hàng:</dt>
                         <dd class="col-sm-8">@(Model.Shipper?.User?.FullName ?? "Chưa có")</dd>
                     }
-
+                    @if (Model.ProcessingAt.HasValue)
+                    {
+                        <dt class="col-sm-4">Ngày xác nhận đơn:</dt>
+                        <dd class="col-sm-8">@Model.ProcessingAt.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                    @if (Model.PreparedAt.HasValue)
+                    {
+                        <dt class="col-sm-4">Ngày hoàn tất chuẩn bị:</dt>
+                        <dd class="col-sm-8">@Model.PreparedAt.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                    @if (Model.DeliveringAt.HasValue)
+                    {
+                        <dt class="col-sm-4">Ngày được vận chuyển đi:</dt>
+                        <dd class="col-sm-8">@Model.DeliveringAt.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                    @if (Model.CancelledAt.HasValue)
+                    {
+                        <dt class="col-sm-4">Ngày hủy đơn:</dt>
+                        <dd class="col-sm-8">@Model.CancelledAt.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
                     @if (Model.CompletedAt.HasValue)
                     {
                         <dt class="col-sm-4">Ngày hoàn thành:</dt>
                         <dd class="col-sm-8">@Model.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm")</dd>
                     }
+					@if (!string.IsNullOrEmpty(Model.Note))
+                    {
+						<dt class="col-sm-4">Ghi chú:</dt>
+						<dd class="col-sm-8 text-danger">@Model.Note</dd>
+					}
                 </dl>
             </div>
         </div>
@@ -162,8 +186,8 @@
     <a asp-action="Index" class="btn btn-secondary">
         <i class="fa fa-arrow-left"></i> Quay lại
     </a>
-    
-    @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
+
+    @if ((await AuthorizationService.AuthorizeAsync(User, "EmployeeAccess")).Succeeded)
     {
         if (Model.Status == OrderStatus.Pending)
         {
@@ -177,17 +201,21 @@
                 <i class="fa fa-utensils"></i> Đã chuẩn bị xong
             </button>
         }
-        
-        <a asp-action="Edit" asp-route-id="@Model.OrderID" class="btn btn-warning">
-            <i class="fa fa-edit"></i> Sửa
-        </a>
-        
+
+
         if (Model.Status != OrderStatus.Completed && Model.Status != OrderStatus.Cancelled)
         {
             <button class="btn btn-danger btn-cancel-order" data-id="@Model.OrderID">
                 <i class="fa fa-times"></i> Hủy đơn
             </button>
         }
+    }
+
+    @if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+    {
+    <a asp-action="Edit" asp-route-id="@Model.OrderID" class="btn btn-warning">
+        <i class="fa fa-edit"></i> Sửa
+    </a>
     }
     
     @if ((await AuthorizationService.AuthorizeAsync(User, "ShipperAccess")).Succeeded)
@@ -216,6 +244,8 @@
         }
     }
 </div>
+
+<partial name="_CancelModalPartial" />
 
 @section Scripts {
     @Html.AntiForgeryToken()
@@ -332,33 +362,47 @@
                     });
                 }
             });
-            
-            // Handle Cancel Order button
+
+            // Handle Cancel Order button - show modal
             $(".btn-cancel-order").click(function() {
                 var orderID = $(this).data("id");
+                $("#cancelOrderId").text(orderID);
+                $("#cancellationReason").val("");
+                $("#cancelOrderModal").modal('show');
+            });
+
+            // Handle Confirm Cancel Order button in modal
+            $("#confirmCancelOrder").click(function() {
+                var orderID = $("#cancelOrderId").text();
+                var reason = $("#cancellationReason").val();
                 var token = $('input[name="__RequestVerificationToken"]').val();
-                
-                if (confirm("Bạn có chắc muốn hủy đơn hàng #" + orderID + "?")) {
-                    $.ajax({
-                        url: '@Url.Action("Cancel")',
-                        type: 'POST',
-                        data: {
-                            orderID: orderID,
-                            __RequestVerificationToken: token
-                        },
-                        success: function(result) {
-                            if (result.success) {
-                                alert(result.message);
-                                location.reload();
-                            } else {
-                                alert(result.message);
-                            }
-                        },
-                        error: function() {
-                            alert("Có lỗi xảy ra. Vui lòng thử lại sau!");
-                        }
-                    });
+
+                if (!reason.trim()) {
+                    alert("Vui lòng nhập lý do hủy đơn hàng!");
+                    return;
                 }
+
+                $.ajax({
+                    url: '@Url.Action("Cancel")',
+                    type: 'POST',
+                    data: {
+                        orderID: orderID,
+                        note: reason,
+                        __RequestVerificationToken: token
+                    },
+                    success: function(result) {
+                        if (result.success) {
+                            alert(result.message);
+                            $("#cancelOrderModal").modal('hide');
+                            location.reload();
+                        } else {
+                            alert(result.message);
+                        }
+                    },
+                    error: function() {
+                        alert("Có lỗi xảy ra. Vui lòng thử lại sau!");
+                    }
+                });
             });
         });
     </script>

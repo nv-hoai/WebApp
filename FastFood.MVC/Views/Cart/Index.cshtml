@@ -149,10 +149,16 @@
                 var currentQty = parseInt(row.find('.item-quantity').text());
                 var quantity = button.hasClass('btn-increase') ? currentQty + 1 : currentQty - 1;
 
+                var token = $('input[name="__RequestVerificationToken"]').val();
+
                 $.ajax({
                     type: 'POST',
                     url: '/Cart/UpdateCart',
-                    data: { productID: productID, quantity: quantity },
+                    data: { 
+                        productID: productID, 
+                        quantity: quantity,
+                        __RequestVerificationToken: token
+                    },
                     success: function (response) {
                         if (response.success) {
                             if (quantity <= 0) {
@@ -180,13 +186,17 @@
                 let button = $(this);
                 let productId = button.data('productid');
                 let productName = button.closest('tr').find('td').eq(1).text().trim();
+                var token = $('input[name="__RequestVerificationToken"]').val();
 
                 if (!confirm('Bạn có chắc muốn xóa món "' + productName + '" khỏi giỏ hàng?')) return;
 
                 $.ajax({
                     url: '/Cart/RemoveFromCart',
                     method: 'POST',
-                    data: { productID: productId },
+                    data: { 
+                        productID: productId,
+                        __RequestVerificationToken: token
+                    },
                     success: function (response) {
                         if (response.success) {
                             button.closest('tr').remove();
@@ -224,10 +234,14 @@
 
             $('#clearCartBtn').click(function () {
                 if (!confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) return;
+                var token = $('input[name="__RequestVerificationToken"]').val();
 
                 $.ajax({
                     type: 'POST',
                     url: '/Cart/ClearCart',
+					data: {
+						__RequestVerificationToken: token
+					},
                     success: function (response) {
                         if (response.success) {
                             $('#cartItems').empty();
@@ -262,16 +276,15 @@
                         alert("Vui lòng chọn phương thức giao hàng.");
                         return;
                 }
+				var token = $('input[name="__RequestVerificationToken"]').val();
 
                 $.ajax({
                     type: 'POST',
                     url: '/Order/CreateFromCart',
                     data: {
                         Address: address,
-                        ShippingMethod: shippingMethod
-                    },
-                    headers: {
-                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        ShippingMethod: shippingMethod,
+						__RequestVerificationToken: token
                     },
                     success: function (response) {
                         if (response.success) {

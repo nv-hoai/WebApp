@@ -102,7 +102,7 @@ namespace FastFood.MVC.Controllers
                 });
             }
 
-            var carts = await GetCartAsync(customer.CustomerID);
+            var carts = await GetCartAsync(customer!.CustomerID);
 			var existingItem = carts.FirstOrDefault(c => c.ProductID == productID);
 
             if (existingItem != null)
@@ -137,6 +137,7 @@ namespace FastFood.MVC.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApplyPromotion(int productID, int? promotionID)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -177,6 +178,8 @@ namespace FastFood.MVC.Controllers
         }
 
         //Xóa sản phẩm khỏi giỏ
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveFromCart(int productID)
         {
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -205,7 +208,8 @@ namespace FastFood.MVC.Controllers
 
 		//Cập nhật số lượng sản phẩm
 		[HttpPost]
-		public async Task<IActionResult> UpdateCart(int productID, int quantity)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateCart(int productID, int quantity)
 		{
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
@@ -244,8 +248,10 @@ namespace FastFood.MVC.Controllers
 			});
 		}
 
-		//Xóa giỏ hàng
-		public async Task<IActionResult> ClearCart()
+        //Xóa giỏ hàng
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClearCart()
         {
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
@@ -266,4 +272,5 @@ namespace FastFood.MVC.Controllers
 			});
         }
     }
+
 }

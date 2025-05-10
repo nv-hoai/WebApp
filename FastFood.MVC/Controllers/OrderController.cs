@@ -280,7 +280,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-		public async Task<IActionResult> CreateFromCart(string Address, ShippingMethod ShippingMethod)
+		public async Task<IActionResult> CreateFromCart(string address, ShippingMethod shippingMethod)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
@@ -312,8 +312,8 @@ namespace FastFood.MVC.Controllers
             var order = new Order
             {
                 CustomerID = customer.CustomerID,
-                Address = Address,
-                ShippingMethod = ShippingMethod,
+                Address = address,
+                ShippingMethod = shippingMethod,
                 CreatedAt = DateTime.Now,
                 Status = OrderStatus.Pending
             };
@@ -352,7 +352,7 @@ namespace FastFood.MVC.Controllers
         // AJAX endpoint for cancelling an order
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Cancel(int orderID)
+        public async Task<IActionResult> Cancel(int orderID, string note)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             Order? order = null;
@@ -366,6 +366,8 @@ namespace FastFood.MVC.Controllers
                     return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID}." });
                 }
                 order.Status = OrderStatus.Cancelled;
+                order.CancelledAt = DateTime.Now;
+                order.Note = note;
                 await _context.SaveChangesAsync();
                 return Json(new
                 {
@@ -398,6 +400,8 @@ namespace FastFood.MVC.Controllers
             }
 
             order.Status = OrderStatus.Cancelled;
+            order.CancelledAt = DateTime.Now;
+            order.Note = note;
             await _context.SaveChangesAsync();
 
             return Json(new
@@ -414,6 +418,7 @@ namespace FastFood.MVC.Controllers
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserID == userID);
+            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.UserID == userID);
 
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Pending);
 
@@ -423,8 +428,9 @@ namespace FastFood.MVC.Controllers
             }
 
             // Assign the employee to the order and update status
-            order.EmployeeID = employee!.EmployeeID;
+            order.EmployeeID = employee.EmployeeID;
             order.Status = OrderStatus.Processing;
+            order.ProcessingAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -446,6 +452,7 @@ namespace FastFood.MVC.Controllers
 
             // Update status
             order.Status = OrderStatus.Prepared;
+            order.PreparedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
@@ -471,6 +478,7 @@ namespace FastFood.MVC.Controllers
             // Assign the shipper to the order and update status
             order.ShipperID = shipper!.ShipperID;
             order.Status = OrderStatus.Delivering;
+            order.DeliveringAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
 

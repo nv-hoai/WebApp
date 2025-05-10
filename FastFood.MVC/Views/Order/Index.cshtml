@@ -39,10 +39,10 @@
                             <th>Thao tác</th>
                         </tr>
                     </thead>
-                     <tbody>
-                            @foreach(var item in Model)
-                            {
-                                <tr>
+                    <tbody>
+                        @foreach(var item in Model)
+                        {
+                            <tr>
                                 <td>@Html.DisplayFor(Model=>item.OrderID)</td>
                                 <td>@Html.DisplayFor(Model => item.TotalCharge)</td>
                                 <td>
@@ -55,8 +55,8 @@
                                     <a asp-action="Edit" asp-route-id="@item.OrderID" class="btn btn-warning btn-sm">Sửa</a>
                                     <a asp-action="Delete" asp-route-id="@item.OrderID" class="btn btn-danger btn-sm">Xóa</a>
                                 </td>
-                                </tr>
-                            }
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -65,7 +65,7 @@
 }
 else
 {
-	Layout = "~/Views/Shared/_IdentityLayout.cshtml";
+    Layout = "~/Views/Shared/_IdentityLayout.cshtml";
 
     <h1>Danh sách đơn hàng</h1>
 
@@ -76,7 +76,6 @@ else
                 <th>Khách hàng</th>
                 @if ((await AuthorizationService.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
                 {
-                    
                     <th>Nhân viên</th>
                     <th>Người giao</th>
                 }
@@ -109,7 +108,7 @@ else
                         <a asp-action="Details" asp-route-id="@item.OrderID" class="btn btn-info btn-sm">
                             <i class="fa fa-info-circle"></i> Chi tiết
                         </a>
-                    
+
                         @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
                         {
                             if (item.Status == OrderStatus.Pending)
@@ -124,11 +123,14 @@ else
                                     <i class="fa fa-utensils"></i> Đã chuẩn bị xong
                                 </button>
                             }
-                        
-                            <a asp-action="Edit" asp-route-id="@item.OrderID" class="btn btn-warning btn-sm">
-                                <i class="fa fa-edit"></i> Sửa
-                            </a>
-                        
+
+                            if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.OrderID" class="btn btn-warning btn-sm">
+                                    <i class="fa fa-edit"></i> Sửa
+                                </a>
+                            }
+
                             if (item.Status != OrderStatus.Completed && item.Status != OrderStatus.Cancelled)
                             {
                                 <button class="btn btn-danger btn-sm btn-cancel-order" data-id="@item.OrderID">
@@ -168,6 +170,8 @@ else
         </tbody>
     </table>
 }
+
+<partial name="_CancelModalPartial" />
 
 @section Scripts {
     @Html.AntiForgeryToken()
@@ -284,34 +288,47 @@ else
                     });
                 }
             });
-            
-            // Handle Cancel Order button
+
+            // Handle Cancel Order button - show modal
             $(".btn-cancel-order").click(function() {
                 var orderID = $(this).data("id");
+                $("#cancelOrderId").text(orderID);
+                $("#cancellationReason").val("");
+                $("#cancelOrderModal").modal('show');
+            });
+
+            // Handle Confirm Cancel Order button in modal
+            $("#confirmCancelOrder").click(function() {
+                var orderID = $("#cancelOrderId").text();
+                var reason = $("#cancellationReason").val();
                 var token = $('input[name="__RequestVerificationToken"]').val();
 
-                
-                if (confirm("Bạn có chắc muốn hủy đơn hàng #" + orderID + "?")) {
-                    $.ajax({
-                        url: '@Url.Action("Cancel")',
-                        type: 'POST',
-                        data: {
-                            orderID: orderID,
-                            __RequestVerificationToken: token
-                        },
-                        success: function(result) {
-                            if (result.success) {
-                                alert(result.message);
-                                location.reload();
-                            } else {
-                                alert(result.message);
-                            }
-                        },
-                        error: function() {
-                            alert("Có lỗi xảy ra. Vui lòng thử lại sau!");
-                        }
-                    });
+                if (!reason.trim()) {
+                    alert("Vui lòng nhập lý do hủy đơn hàng!");
+                    return;
                 }
+
+                $.ajax({
+                    url: '@Url.Action("Cancel")',
+                    type: 'POST',
+                    data: {
+                        orderID: orderID,
+                        note: reason,
+                        __RequestVerificationToken: token
+                    },
+                    success: function(result) {
+                        if (result.success) {
+                            alert(result.message);
+                            $("#cancelOrderModal").modal('hide');
+                            location.reload();
+                        } else {
+                            alert(result.message);
+                        }
+                    },
+                    error: function() {
+                        alert("Có lỗi xảy ra. Vui lòng thử lại sau!");
+                    }
+                });
             });
         });
     </script>
