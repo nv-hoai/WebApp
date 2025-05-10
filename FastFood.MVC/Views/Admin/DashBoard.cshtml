@@ -66,7 +66,7 @@
 
 <!-- Chart -->
 <div class="row mb-4">
-    <div class="col-md-6">
+    <div class="col-md-6 mx-auto">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Doanh thu 7 ngày qua</h5>
@@ -101,7 +101,7 @@
 						<td>@order.TotalAmount.ToString("N0")₫</td>
 						<td><span class="badge bg-@(order.Status ==  OrderStatus.Completed ? "success" : "warning")">@order.Status</span></td>
 					</tr>
-				})
+				}
             </tbody>
         </table>
     </div>
