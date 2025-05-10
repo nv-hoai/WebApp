@@ -162,15 +162,29 @@
                     success: function (response) {
                         if (response.success) {
                             if (quantity <= 0) {
-                                row.remove();
+                                row.fadeOut(200, function () {
+                                    $(this).remove();
+                                    updateTotal();
+                                    updateCartCount();
+                                });
                             } else {
-                                row.find('.item-quantity').text(quantity);
+                                row.find('.item-quantity')
+                                    .fadeOut(100, function () {
+                                        $(this).text(quantity).fadeIn(100);
+                                    });
+
                                 var priceText = row.find('td').eq(4).text().replace(/[^\d]/g, '');
                                 var price = parseInt(priceText) || 0;
                                 var subtotal = price * quantity;
-                                row.find('.item-subtotal').text(subtotal.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND');
+
+                                row.find('.item-subtotal')
+                                    .fadeOut(100, function () {
+                                        $(this).text(subtotal.toLocaleString('vi-VN', { minimumFractionDigits: 0 }) + ' VND').fadeIn(100);
+                                    });
+
+                                updateTotal();
+                                updateCartCount(); 
                             }
-                            updateTotal();
                         } else {
                             alert(response.message || "Có lỗi xảy ra khi cập nhật giỏ hàng.");
                         }
@@ -199,8 +213,11 @@
                     },
                     success: function (response) {
                         if (response.success) {
-                            button.closest('tr').remove();
-                            updateTotal();
+                            button.closest('tr').fadeOut(200, function () {
+                                $(this).remove();
+                                updateTotal();
+                                updateCartCount(); 
+                            });
                         } else {
                             alert(response.message || 'Không thể xóa sản phẩm. Vui lòng thử lại.');
                         }
@@ -244,10 +261,13 @@
 					},
                     success: function (response) {
                         if (response.success) {
-                            $('#cartItems').empty();
+                            $('#cartItems tr').fadeOut(200, function () {
+                                $(this).remove();
+                            });
                             $('#totalAmount').text('0 VND');
                             $('#totalCharge').text('0 VND');
                             $('#shippingFee').text('0 VND');
+                            updateCartCount(); 
                             alert('Giỏ hàng đã được xóa.');
                         }
                     },
@@ -269,9 +289,9 @@
 
                 let shippingMethod;
                 switch (shippingFee) {
-                    case 50000: shippingMethod = 0; break; // Ưu tiên
-                    case 40000: shippingMethod = 1; break; // Nhanh
-                    case 30000: shippingMethod = 2; break; // Tiết kiệm
+                    case 50000: shippingMethod = 0; break;
+                    case 40000: shippingMethod = 1; break;
+                    case 30000: shippingMethod = 2; break;
                     default:
                         alert("Vui lòng chọn phương thức giao hàng.");
                         return;
@@ -299,6 +319,19 @@
                     }
                 });
             });
+            updateCartCount();
         });
+
+        function updateCartCount() {
+            fetch('/Cart/GetCartCount')
+                .then(res => res.json())
+                .then(data => {
+                    const badge = document.getElementById('cartCount');
+                    if (badge) {
+                        badge.textContent = data.count;
+                    }
+                });
+        }
     </script>
+
 }

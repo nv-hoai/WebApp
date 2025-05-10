@@ -271,6 +271,23 @@ namespace FastFood.MVC.Controllers
 				cartCount = 0
 			});
         }
+        [HttpGet]
+        public async Task<IActionResult> GetCartCount()
+        {
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
+            if (customer == null)
+            {
+                return Json(new { count = 0 });
+            }
+
+            var count = await _context.CartItems
+                .Where(c => c.CustomerID == customer.CustomerID)
+                .SumAsync(c => c.Quantity);
+
+            return Json(new { count });
+        }
+
     }
 
 }

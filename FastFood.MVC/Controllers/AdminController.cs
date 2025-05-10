@@ -11,7 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace FastFood.MVC.Controllers
 {
-    [Authorize(Policy = "AdminAccess")]
+    
     public class AdminController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -41,6 +41,7 @@ namespace FastFood.MVC.Controllers
             _context = context;
             _dashboardService = dashboardService;
         }
+        [Authorize(Policy = "AdminAccess")]
         [Route("Accounts")]
         public async Task<IActionResult> Index()
         {
@@ -70,7 +71,7 @@ namespace FastFood.MVC.Controllers
 
             return View(model);
         }
-
+        [Authorize(Policy = "AdminOrEmployeeOrShipperAccess")]
         public async Task<IActionResult> Dashboard()
         {
             var viewModel = await _dashboardService.GetDashboardDataAsync();
@@ -79,6 +80,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost]
         [Route("Accounts/Register")]
+        [Authorize(Policy = "AdminAccess")]
         public async Task<IActionResult> Register(UserViewModel model)
         {
             if (ModelState.IsValid)
@@ -140,6 +142,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpGet]
         [Route("Accounts/Edit")]
+        [Authorize(Policy = "AdminAccess")]
         public async Task<IActionResult> Edit(string email)
         {
             var user = await _context.UserRoles
@@ -159,6 +162,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost]
         [Route("Accounts/Edit")]
+        [Authorize(Policy = "AdminAccess")]
         public async Task<IActionResult> Edit(string oldEmail, UserViewModel model)
         {
             var user = await _userManager.FindByEmailAsync(oldEmail);
@@ -274,6 +278,7 @@ namespace FastFood.MVC.Controllers
 
         [HttpPost]
         [Route("Accounts/Delete")]
+        [Authorize(Policy = "AdminAccess")]
         public async Task<IActionResult> Delete(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
@@ -291,7 +296,7 @@ namespace FastFood.MVC.Controllers
 
             return View("Error");
         }
-
+        [Authorize(Policy = "AdminAccess")]
         private ApplicationUser CreateUser()
         {
             try
@@ -305,7 +310,7 @@ namespace FastFood.MVC.Controllers
                     $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
             }
         }
-
+        [Authorize(Policy = "AdminAccess")]
         private IUserEmailStore<ApplicationUser> GetEmailStore()
         {
             if (!_userManager.SupportsUserEmail)

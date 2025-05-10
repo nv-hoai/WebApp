@@ -33,62 +33,104 @@
                             var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
                             var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
                         }
-                        <li class="nav-item">
-                            <a class="nav-link @(currentController == "Admin" && currentAction == "Dashboard" ?"active text-white" : "text-white")"
-                               asp-controller="Admin" asp-action="Dashboard">
-                                <i class="fas fa-tachometer-alt me-2"></i>Thống kê
-                            </a>
-                        </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Admin" && currentAction == "Dashboard" ?"active text-white" : "text-white")"
+                                asp-controller="Admin" asp-action="Dashboard">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Thống kê
+                                </a>
+                            </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link text-white d-flex justify-content-between align-items-center text-nowrap"
-                               data-bs-toggle="collapse"
-                               href="#storeMenu"
-                               role="button"
-                               aria-expanded="@(new[] { "Product", "Promotion", "Order" }.Contains(currentController).ToString().ToLower())"
-                               aria-controls="storeMenu">
-                                <span><i class="fas fa-store me-2"></i>Quản lý cửa hàng</span>
-                                <i class="fas fa-chevron-down toggle-icon"></i>
-                            </a>
-                            <div class="collapse @(new[] { "Product", "Promotion", "Order" }.Contains(currentController) ? "show" : "")" id="storeMenu">
-                                <ul class="nav flex-column ms-3">
-                                    <li class="nav-item">
-                                        <a class="nav-link @(currentController == "Product" ? "active text-white" : "text-white")"
-                                           asp-controller="Product" asp-action="Index">
-                                            <i class="fas fa-utensils me-2"></i>Thực đơn
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link @(currentController == "Promotion" ? "active text-white" : "text-white")"
-                                           asp-controller="Promotion" asp-action="Index">
-                                            <i class="fas fa-gift me-2"></i>Khuyến mãi
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link @(currentController == "Order" ? "active text-white" : "text-white")"
-                                           asp-controller="Order" asp-action="Index">
-                                            <i class="fas fa-shopping-cart me-2"></i>Đơn hàng
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white d-flex justify-content-between align-items-center text-nowrap"
+                                data-bs-toggle="collapse"
+                                href="#storeMenu"
+                                role="button"
+                                aria-expanded="@(new[] { "Product", "Promotion", "Order" }.Contains(currentController).ToString().ToLower())"
+                                aria-controls="storeMenu">
+                                    <span><i class="fas fa-store me-2"></i>Quản lý cửa hàng</span>
+                                    <i class="fas fa-chevron-down toggle-icon"></i>
+                                </a>
+                                <div class="collapse @(new[] { "Product", "Promotion", "Order" }.Contains(currentController) ? "show" : "")" id="storeMenu">
+                                    <ul class="nav flex-column ms-3">
+                                        <li class="nav-item">
+                                            <a class="nav-link @(currentController == "Product" ? "active text-white" : "text-white")"
+                                            asp-controller="Product" asp-action="Index">
+                                                <i class="fas fa-utensils me-2"></i>Thực đơn
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link @(currentController == "Promotion" ? "active text-white" : "text-white")"
+                                            asp-controller="Promotion" asp-action="Index">
+                                                <i class="fas fa-gift me-2"></i>Khuyến mãi
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link @(currentController == "Order" ? "active text-white" : "text-white")"
+                                            asp-controller="Order" asp-action="Index">
+                                                <i class="fas fa-shopping-cart me-2"></i>Đơn hàng
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link @(currentController == "Admin" && currentAction == "Index" ?"active text-white" : "text-white")"
-                               asp-controller="Admin" asp-action="Index">
-                                <i class="fas fa-users-cog me-2"></i>Quản lý tài khoản
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <form class="form-inline p-0 m-0" asp-area="Identity" asp-page="/Account/Logout"
-                                  asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button type="submit" class="nav-link btn btn-link text-white">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                                </button>
-                            </form>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Admin" && currentAction == "Index" ?"active text-white" : "text-white")"
+                                asp-controller="Admin" asp-action="Index">
+                                    <i class="fas fa-users-cog me-2"></i>Quản lý tài khoản
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <form class="form-inline p-0 m-0" asp-area="Identity" asp-page="/Account/Logout"
+                                asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                    <button type="submit" class="nav-link btn btn-link text-white">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                        else if (User.IsInRole("Employee"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Admin" && currentAction == "Dashboard" ? "active text-white" : "text-white")"
+                                asp-controller="Admin" asp-action="Dashboard">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Thống kê
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Order" ? "active text-white" : "text-white")"
+                                asp-controller="Order" asp-action="Index">
+                                    <i class="fas fa-shopping-cart me-2"></i>Quản lý đơn hàng
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <form class="form-inline p-0 m-0" asp-area="Identity" asp-page="/Account/Logout"
+                                asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                    <button type="submit" class="nav-link btn btn-link text-white">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                        else if (User.IsInRole("Shipper"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Order" ? "active text-white" : "text-white")"
+                                   asp-controller="Order" asp-action="Index">
+                                    <i class="fas fa-shopping-cart me-2"></i>Đơn hàng
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <form class="form-inline p-0 m-0" asp-area="Identity" asp-page="/Account/Logout"
+                                      asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                    <button type="submit" class="nav-link btn btn-link text-white">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        }
                     </ul>
                 </div>
             </nav>
@@ -98,10 +140,21 @@
                 <!-- Top Navbar -->
                 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
                     <div class="container-fluid">
-                        <span class="navbar-brand mb-0 h5">Xin chào, Admin</span>
+                        @{
+                            var hour = DateTime.Now.Hour;
+                            var greeting = hour < 12 ? "Chào buổi sáng!" :
+                            hour < 18 ? "Chào buổi chiều!" :
+                            "Chào buổi tối!";
+                        }
+                        <span class="navbar-brand mb-0 h5">@greeting</span>
                         <div class="d-flex align-items-center">
+                            <a class="btn-sm-square bg-white rounded-circle ms-3 position-relative" asp-controller="Notification" asp-action="Index">
+                                <small class="fa fa-bell text-body"></small>
+                                <span class="notification-badge" id="notificationCount">0</span>
+                            </a>
                             <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage"> 
-                                <small class="fa fa-user text-body"></small></a>
+                                <small class="fa fa-user text-body"></small>
+                            </a>
                         </div>
                     </div>
                 </nav>
