@@ -21,6 +21,7 @@
                 <th scope="col">Tên sản phẩm</th>
                 <th scope="col">Số lượng</th>
                 <th scope="col">Giá gốc</th>
+                <th scope="col">Khuyến mãi</th> @* New column for promotions *@
                 <th scope="col">Giá sau giảm</th>
                 <th scope="col">Thành tiền</th>
                 <th scope="col">Thao tác</th>
@@ -30,7 +31,7 @@
             @if (TempData["CartError"] != null)
             {
                 <tr>
-                    <td colspan="5">
+                    <td colspan="8">
                         <div class="alert alert-danger" role="alert">
                             @TempData["CartError"]
                         </div>
@@ -58,6 +59,17 @@
                     </td>
                     <td class="text-decoration-line-through text-muted me-2 text-center">
                         @((item.UnitPrice * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND
+                    </td>
+                    <td class="text-center">
+                        @if (item.Promotion != null)
+                        {
+                            <span class="badge bg-success">@item.PromotionName</span>
+                            <div>Giảm @(item.Promotion.DiscountPercent * 100)%</div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không có</span>
+                        }
                     </td>
                     <td class="fw-bold text-danger text-center">
                         @((item.DiscountedPrice * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND
@@ -173,7 +185,7 @@
                                         $(this).text(quantity).fadeIn(100);
                                     });
 
-                                var priceText = row.find('td').eq(4).text().replace(/[^\d]/g, '');
+                                var priceText = row.find('td').eq(5).text().replace(/[^\d]/g, '');
                                 var price = parseInt(priceText) || 0;
                                 var subtotal = price * quantity;
 

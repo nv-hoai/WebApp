@@ -1,28 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FastFood.MVC.Data;
 using FastFood.MVC.Models;
-using FastFood.MVC.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using FastFood.MVC.Services;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace FastFood.MVC.Controllers
 {
     public class PromotionController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly AzureBlobService _blobService;
+        private readonly NotificationService _notificationService;
 
-        public PromotionController(ApplicationDbContext context, AzureBlobService blobService)
+        public PromotionController(ApplicationDbContext context, NotificationService notificationService)
         {
             _context = context;
-            _blobService = blobService;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index(string? promotion, string? discountPercentSort)
@@ -89,8 +83,20 @@ namespace FastFood.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
+
                 _context.Add(promotion);
                 await _context.SaveChangesAsync();
+                var promotionAdded = await _context.Promotions
+                    .FirstOrDefaultAsync(p => p.PromotionID == promotion.PromotionID);
+                var customers = await _context.Customers.ToListAsync();
+                foreach (var customer in customers)
+                {
+                    await _notificationService.CreateNotification(
+                        customer.UserID,
+                        $"Có khuyến mãi mới, xem ngay!",
+                        $"/Promotion/Details/{promotionAdded.ProductID}",
+                        "fa-check-circle");
+                }
                 return RedirectToAction(nameof(Index));
             }
             ViewData["Product"] = new SelectList(_context.Products, "ProductID", "Name");

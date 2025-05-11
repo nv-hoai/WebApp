@@ -1,14 +1,9 @@
-﻿using System.Reflection.Metadata.Ecma335;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using FastFood.MVC.Data;
-using FastFood.MVC.Helpers;
 using FastFood.MVC.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration.UserSecrets;
-using NuGet.Protocol.Plugins;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FastFood.MVC.Controllers
@@ -26,14 +21,15 @@ namespace FastFood.MVC.Controllers
         }
 
         //Lấy thông tin giỏ hàng của khách ID từ DB
-		public async Task<List<CartItem>> GetCartAsync(int CustomerID)
-		{
-			var cart = await _context.CartItems
-									.Include(c => c.Product)
+        public async Task<List<CartItem>> GetCartAsync(int CustomerID)
+        {
+            var cart = await _context.CartItems
+                                    .Include(c => c.Product)
+                                    .Include(c => c.Promotion) // Include promotion details
                                     .Where(c => c.CustomerID == CustomerID)
-									.ToListAsync(); 
-			return cart;
-		}
+                                    .ToListAsync();
+            return cart;
+        }
 
         //Hiển thị giỏ hàng sau khi đăng nhập
         [HttpGet]
@@ -64,9 +60,7 @@ namespace FastFood.MVC.Controllers
 
             // Load available promotions for dropdown
             ViewBag.PromotionID = new SelectList(
-                await _context.Promotions
-                    .Where(p => p.ProductID == productID || p.CategoryID == cartItem.Product.CategoryID)
-                    .ToListAsync(),
+                await GetValidPromotionAsync(productID, cartItem.Product.CategoryID),
                 "PromotionID",
                 "Name",
                 cartItem.PromotionID
@@ -76,43 +70,50 @@ namespace FastFood.MVC.Controllers
         }
 
 
-        //Thêm sản phẩm vào giỏ
         [HttpPost]
-		[ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToCart(int productID, int quantity = 1)
         {
-			if (quantity < 1)
-			{
-				return Json(new 
-                { 
-                    success = false, 
-                    message = "Số lượng sản phẩm phải lớn hơn 0." 
+            if (quantity < 1)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Số lượng sản phẩm phải lớn hơn 0."
                 });
-			}
+            }
 
-			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-            
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductID == productID);
+
+            var product = await _context.Products
+                .Include(p => p.Category) // Include Category to get its ID
+                .FirstOrDefaultAsync(p => p.ProductID == productID);
+
             if (product == null)
             {
-                return Json (new {
+                return Json(new
+                {
                     success = false,
                     message = $"Không tìm thấy sản phẩm có mã #{productID}"
                 });
             }
 
             var carts = await GetCartAsync(customer!.CustomerID);
-			var existingItem = carts.FirstOrDefault(c => c.ProductID == productID);
+            var existingItem = carts.FirstOrDefault(c => c.ProductID == productID);
 
             if (existingItem != null)
             {
                 existingItem.Quantity += quantity;
-				existingItem.Calculate(); 
-				_context.CartItems.Update(existingItem);
-			}
+                existingItem.Calculate();
+                _context.CartItems.Update(existingItem);
+            }
             else
             {
+                // Find best promotion for this product
+                var validPromotions = await GetValidPromotionAsync(productID, product.CategoryID);
+                var bestPromotion = validPromotions.FirstOrDefault();
+
                 var cartItem = new CartItem
                 {
                     CustomerID = customer.CustomerID,
@@ -121,19 +122,24 @@ namespace FastFood.MVC.Controllers
                     UnitPrice = product.Price,
                     Quantity = quantity,
                     CreatedAt = DateTime.Now,
-				};
+                    // Apply promotion if found
+                    PromotionID = bestPromotion?.PromotionID,
+                    PromotionName = bestPromotion?.Name,
+                    Promotion = bestPromotion
+                };
 
-				cartItem.Calculate();
+                cartItem.Calculate();
                 await _context.CartItems.AddAsync(cartItem);
+            }
 
-			}
             await _context.SaveChangesAsync();
-			return Json(new 
-            { 
-                success = true, 
+
+            return Json(new
+            {
+                success = true,
                 message = $"Đã thêm sản phẩm {productID} vào giỏ hàng!",
-				cartCount = carts.Sum(c => c.Quantity)
-			});
+                cartCount = carts.Sum(c => c.Quantity) + (existingItem == null ? quantity : 0)
+            });
         }
 
         [HttpPost]
@@ -237,7 +243,7 @@ namespace FastFood.MVC.Controllers
 				});
 			}
 
-				cartItem.Quantity = quantity;
+			cartItem.Quantity = quantity;
 			_context.CartItems.Update(cartItem);
 			await _context.SaveChangesAsync();
 
@@ -288,6 +294,21 @@ namespace FastFood.MVC.Controllers
             return Json(new { count });
         }
 
+
+        private async Task<List<Promotion>> GetValidPromotionAsync(int productID, int categoryID)
+        {
+            var now = DateTime.Now;
+
+            var validPromotions = await _context.Promotions
+                .Where(p =>
+                    p.StartDate <= now && p.ExpiryDate >= now &&
+                    (p.ProductID == productID || p.CategoryID == categoryID)
+                )
+                .OrderByDescending(p => p.DiscountPercent)
+                .ToListAsync();
+
+            return validPromotions;
+        }
     }
 
 }

@@ -6,12 +6,12 @@ using System.Net.Mail;
 
 namespace FastFood.MVC.Services
 {
-    public class EmailSender : IEmailSender
+    public class EmailSenderService : IEmailSender
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger<EmailSender> _logger;
+        private readonly ILogger<EmailSenderService> _logger;
 
-        public EmailSender(IConfiguration configuration, ILogger<EmailSender> logger)
+        public EmailSenderService(IConfiguration configuration, ILogger<EmailSenderService> logger)
         {
             _configuration = configuration;
             _logger = logger;
@@ -31,7 +31,7 @@ namespace FastFood.MVC.Services
 
             using var mailMessage = new MailMessage
             {
-                From = new MailAddress(fromEmail),
+                From = new MailAddress(fromEmail, "Burgz Fast Food"),
                 Subject = subject,
                 Body = htmlMessage,
                 IsBodyHtml = true,

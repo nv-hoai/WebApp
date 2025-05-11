@@ -1,0 +1,31 @@
+﻿<div class="dropdown ms-3">
+    <a class="btn-sm-square bg-white rounded-circle position-relative"
+       href="#"
+       role="button"
+       id="notificationDropdown"
+       data-bs-toggle="dropdown"
+       aria-expanded="false"
+       data-bs-auto-close="outside">
+        <small class="fa fa-bell text-body"></small>
+        <span class="notification-badge" id="notificationCount">0</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown"
+        style="width: 350px; min-width: 350px;">
+        <!-- Increased width here -->
+        <li>
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                <h6 class="mb-0">Thông báo</h6>
+                <button class="btn btn-sm text-primary p-0 mark-all-read">Đánh dấu đã đọc</button>
+            </div>
+        </li>
+        <li>
+            <div class="notification-list" style="max-height: 400px; overflow-y: auto;">
+                <!-- Increased height here -->
+                <!-- Notifications will be loaded here -->
+            </div>
+        </li>
+        <li class="text-center p-2 border-top">
+            <a href="#" class="text-decoration-none small">Xem tất cả</a>
+        </li>
+    </ul>
+</div>

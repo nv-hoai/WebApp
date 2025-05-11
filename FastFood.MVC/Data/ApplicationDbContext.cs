@@ -22,6 +22,9 @@ namespace FastFood.MVC.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Message> Messages { get; set; }
+
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

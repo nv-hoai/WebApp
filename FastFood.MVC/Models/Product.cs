@@ -35,6 +35,5 @@ namespace FastFood.MVC.Models
         [Display(Name = "Sản phẩm phổ biến")]
         public bool IsPopular { get; set; } = false;
         public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new HashSet<OrderDetail>();
-        public virtual ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
     }
 }

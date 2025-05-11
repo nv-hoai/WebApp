@@ -82,10 +82,7 @@
                             <small class="fa fa-shopping-bag text-body"></small>
                             <span class="cart-badge" id="cartCount">0</span>
                         </a>
-                        <a class="btn-sm-square bg-white rounded-circle ms-3 position-relative" asp-controller="Notification" asp-action="Index">
-                            <small class="fa fa-bell text-body"></small>
-                            <span class="notification-badge" id="notificationCount">0</span>
-                        </a>
+						<partial name="_NotificationPartial" />
                     }
                     @* Login section *@
                     <div class="dropdown ms-3">
@@ -176,3 +173,161 @@
     }
     document.addEventListener('DOMContentLoaded', updateCartCount);
 </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize notifications if user is logged in
+        if (document.getElementById('notificationDropdown')) {
+            initializeNotifications();
+
+            // Check for new notifications every 30 seconds
+            setInterval(loadNotificationCount, 30000);
+
+            // Mark all as read button
+            document.querySelector('.mark-all-read').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                markAllAsRead();
+            });
+
+            // Load notifications when dropdown is opened
+            document.getElementById('notificationDropdown').addEventListener('show.bs.dropdown', loadNotifications);
+        }
+    });
+
+    function initializeNotifications() {
+        // Initial load of notification count
+        loadNotificationCount();
+    }
+
+    function loadNotificationCount() {
+        fetch('/Notifications/GetUnreadCount')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('notificationCount');
+                badge.textContent = data.count;
+
+                if (data.count > 0) {
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error loading notification count:', error));
+    }
+
+    function loadNotifications() {
+        const notificationList = document.querySelector('.notification-list');
+
+        // Show loading indicator
+        notificationList.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>';
+
+        fetch('/Notifications/GetNotifications')
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    notificationList.innerHTML = '<div class="no-notifications">Không có thông báo</div>';
+                    return;
+                }
+
+                let notificationsHtml = '';
+                data.forEach(notification => {
+                    const timeAgo = formatTimeAgo(new Date(notification.createdAt));
+                    const unreadClass = notification.isRead ? '' : 'unread';
+                    const iconClass = notification.iconClass || 'fa-bell';
+
+                    notificationsHtml += `
+                        <a href="${notification.link || '#'}" class="notification-item ${unreadClass}" data-id="${notification.notificationID}">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon me-3">
+                                    <i class="fa ${iconClass}"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="notification-title">${notification.message}</div>
+                                    <div class="notification-time">${timeAgo}</div>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+
+                notificationList.innerHTML = notificationsHtml;
+
+                // Add click handlers for marking notifications as read
+                document.querySelectorAll('.notification-item.unread').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        markAsRead(id);
+                        this.classList.remove('unread');
+                    });
+                });
+            })
+            .catch(error => {
+                notificationList.innerHTML = '<div class="no-notifications">Không thể tải thông báo</div>';
+                console.error('Error loading notifications:', error);
+            });
+    }
+
+    function getAntiForgeryToken() {
+        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+        return tokenElement ? tokenElement.value : '';
+    }
+
+    function markAsRead(id) {
+        fetch('/Notifications/MarkAsRead', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({ notificationID: id })
+        })
+        .then(response => {
+            if (response.ok) {
+                loadNotificationCount();
+            }
+        });
+    }
+
+    function markAllAsRead() {
+        fetch('/Notifications/MarkAllAsRead', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                document.querySelectorAll('.notification-item.unread').forEach(item => {
+                    item.classList.remove('unread');
+                });
+                loadNotificationCount();
+            }
+        });
+    }
+
+    function formatTimeAgo(date) {
+        const now = new Date();
+        const seconds = Math.floor((now - date) / 1000);
+
+        if (seconds < 60) return 'Vừa xong';
+
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} phút trước`;
+
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} giờ trước`;
+
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `${days} ngày trước`;
+
+        // Format date as dd/mm/yyyy
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
+    }
+</script>
+}
+

@@ -13,11 +13,16 @@ namespace FastFood.MVC.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly AzureBlobService _blobService;
+        private readonly NotificationService _notificationService;
 
-        public ProductController(ApplicationDbContext context, AzureBlobService blobService)
+        public ProductController(
+            ApplicationDbContext context,
+            AzureBlobService blobService,
+            NotificationService notificationService)
         {
             _context = context;
             _blobService = blobService;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index(string? category, string? productName, string? priceSort, int? activeIndex)
@@ -111,8 +116,20 @@ namespace FastFood.MVC.Controllers
 
                 _context.Add(product);
                 await _context.SaveChangesAsync();
+                var productAdded = await _context.Products
+                    .FirstOrDefaultAsync(m => m.ProductID == product.ProductID);
+                var customers = await _context.Customers.ToListAsync();
+                foreach (var customer in customers)
+                {
+                    await _notificationService.CreateNotification(
+                        customer.UserID,
+                        $"Có sản phẩm mới, xem ngay!",
+                        $"/Product/Details/{productAdded.ProductID}",
+                        "fa-check-circle");
+                }
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["CategoryID"] = new SelectList(_context.Categories, "CategoryID", "Name", model.CategoryID);
             return View(model);
         }

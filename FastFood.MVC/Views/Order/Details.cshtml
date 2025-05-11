@@ -4,7 +4,7 @@
 @inject IAuthorizationService AuthorizationService
 @{
     ViewData["Title"] = "Details";
-    if ((await AuthorizationService.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
+    if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeOrShipperAccess")).Succeeded)
     {
         Layout = "~/Views/Shared/_AdminLayout.cshtml";
     }
@@ -46,7 +46,7 @@
                     <dt class="col-sm-4">Ngày tạo đơn:</dt>
                     <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
 
-                    @if ((await AuthorizationService.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
+                    @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeOrShipperAccess")).Succeeded)
                     {
                         <dt class="col-sm-4">Nhân viên xử lý:</dt>
                         <dd class="col-sm-8">@(Model.Employee?.User?.FullName ?? "Chưa có")</dd>
@@ -234,7 +234,7 @@
         }
     }
     
-    @if (!(await AuthorizationService.AuthorizeAsync(User, "OrderManagementAccess")).Succeeded)
+    @if (!(await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeOrShipperAccess")).Succeeded)
     {
         if (Model.Status == OrderStatus.Pending)
         {

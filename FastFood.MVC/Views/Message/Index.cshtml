@@ -1,0 +1,108 @@
+﻿@model FastFood.MVC.ViewModels.MessageViewModel
+
+@{
+    ViewData["Title"] = "Quản lý tin nhắn";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container py-4">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row mb-3">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Thống kê tin nhắn</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="alert alert-primary">
+                                Tổng số tin nhắn: <strong>@Model.Messages.Count</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-warning">
+                                Chưa trả lời: <strong>@Model.Messages.Count(m => m.Status == MessageStatus.UnReplied)</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="alert alert-success">
+                                Đã trả lời: <strong>@Model.Messages.Count(m => m.Status == MessageStatus.Replied)</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Người gửi</th>
+                    <th>Email</th>
+                    <th>Nội dung</th>
+                    <th>Ngày gửi</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var message in Model.Messages)
+                {
+                    <tr class="@(message.Status == MessageStatus.UnReplied ? "table-warning" : "")">
+                        <td>@message.Id</td>
+                        <td>@message.SenderName</td>
+                        <td>@message.Email</td>
+                        <td>@(message.Content.Length > 50 ? message.Content.Substring(0, 50) + "..." : message.Content)</td>
+                        <td>@message.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @if (message.Status == MessageStatus.UnReplied)
+                            {
+                                <span class="badge bg-warning">Chưa trả lời</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Đã trả lời</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a asp-action="Details" asp-route-id="@message.Id" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i> Chi tiết
+                                </a>
+                                @if (message.Status == MessageStatus.UnReplied)
+                                {
+                                    <a asp-action="Reply" asp-route-id="@message.Id" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-reply"></i> Trả lời
+                                    </a>
+                                }
+                                <form asp-action="Delete" asp-route-id="@message.Id" method="post"
+                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa tin nhắn này?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Messages.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center">Không có tin nhắn nào</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
