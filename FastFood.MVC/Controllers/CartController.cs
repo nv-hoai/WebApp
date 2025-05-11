@@ -294,8 +294,72 @@ namespace FastFood.MVC.Controllers
             return Json(new { count });
         }
 
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Policy = "CustomerAccess")]
+		public async Task<IActionResult> CreateCartNow(int productID)
+		{
+			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
 
-        private async Task<List<Promotion>> GetValidPromotionAsync(int productID, int categoryID)
+			if (customer == null)
+			{
+				return Json(new
+				{
+					success = false,
+					message = $"Không tìm thấy dữ liệu tài khoản #{userID}"
+				});
+			}
+
+			var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductID == productID);
+			if (product == null)
+			{
+				return Json(new
+				{
+					success = false,
+					messafe = $"Không tìm thấy sản phẩm #{productID}"
+				});
+			}
+
+			var existingCartItem = await _context.CartItems.FirstOrDefaultAsync(ci =>
+										ci.CustomerID == customer.CustomerID
+										&& ci.ProductID == productID);
+
+			if (existingCartItem != null)
+			{
+				existingCartItem.Quantity++;
+				existingCartItem.Calculate();
+				_context.CartItems.Update(existingCartItem);
+			}
+			else
+			{
+				var cart = new CartItem
+				{
+					CustomerID = customer.CustomerID,
+					ProductID = productID,
+					ProductName = product.Name,
+					UnitPrice = product.Price,
+					Quantity = 1,
+				};
+				cart.Calculate();
+				_context.CartItems.Add(cart);
+			}
+
+			await _context.SaveChangesAsync();
+
+			var updatedCartCount = await _context.CartItems
+										 .Where(ci => ci.CustomerID == customer.CustomerID)
+										 .SumAsync(ci => ci.Quantity);
+
+			return Json(new
+			{
+				success = true,
+				cartCount = updatedCartCount,
+			});
+		}
+
+
+		private async Task<List<Promotion>> GetValidPromotionAsync(int productID, int categoryID)
         {
             var now = DateTime.Now;
 

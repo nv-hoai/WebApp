@@ -15,7 +15,7 @@
     </div>
 
     <table class="table table-bordered table-hover">
-        <thead>
+        <thead class="text-center">
             <tr>
                 <th scope="col">Hình ảnh</th>
                 <th scope="col">Tên sản phẩm</th>
@@ -41,7 +41,7 @@
             @foreach (var item in Model)
             {
                 <tr data-product-id="@item.ProductID">
-                    <td>
+                    <td class="text-center">
                         @if (item.Product != null)
                         {
                             <img src="@item.Product.ImageUrl" alt="Ảnh sản phẩm" width="60" />
@@ -53,9 +53,9 @@
                     </td>
                     <td>@item.ProductName</td>
                     <td class="text-center">
-                        <button type="button" class="btn-decrease btn btn-link btn-lg" style="color:red" data-productid="@item.ProductID">-</button>
-                        <span class="item-quantity">@item.Quantity</span>
-                        <button type="button" class="btn-increase btn btn-link btn-lg" data-productid="@item.ProductID">+</button>
+                        <button type="button" class="btn-decrease btn btn-danger btn-sm" style="color:white" data-productid="@item.ProductID">-</button>
+                        <span class="item-quantity btn btn-info" style="background-color:transparent">@item.Quantity</span>
+                        <button type="button" class="btn-increase btn btn-success btn-sm" data-productid="@item.ProductID">+</button>
                     </td>
                     <td class="text-decoration-line-through text-muted me-2 text-center">
                         @((item.UnitPrice * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND
@@ -74,16 +74,17 @@
                     <td class="fw-bold text-danger text-center">
                         @((item.DiscountedPrice * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND
                     </td>
-                    <td class="item-subtotal text-center">
+                    <td class="item-subtotal text-success text-center">
                         @((item.SubTotal * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND
                     </td>
                     <td class="text-center">
                         <a asp-action="Details" asp-route-productID="@item.ProductID"
-                           class="btn btn-info text-info"
-                           style="border: none; background: none; text-decoration: none;">
+                           class="btn btn-info">
                             Chi tiết
                         </a>
-                        <button class="btn-delete text-danger" data-productid="@item.ProductID" style="border: none; background: none;">Xóa</button>
+                        <button class="btn btn-danger" data-productid="@item.ProductID">
+                            Xóa
+                        </button>
                     </td>
                 </tr>
             }
@@ -124,27 +125,33 @@
     </div>
 </div>
 
-<!--Hiển thị tổng tiền và các nút thao tác-->
-<div class="container mt-1">
-    <h4>Tổng tiền</h4>
-    <table>
-        <tr>
-            <td>Phí tạm tính</td>
-            <td><span id="totalAmount">@((Model.Sum(m => m.SubTotal * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))))</span> VND</td>
-        </tr>
-        <tr>
-            <td>Phí giao hàng</td>
-            <td><span id="shippingFee">0 VND</span></td>
-        </tr>
-        <tr>
-            <td>Tổng tiền</td>
-            <td><span id="totalCharge">0 VND</span></td>
-        </tr>
-    </table>
+<div class="container mt-4 card p-4 shadow-sm">
+    <h4 class="card-title mb-4 border-bottom pb-2">Tổng tiền đơn hàng</h4>
 
-    <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-primary" id="checkoutBtn">Thanh toán</button>
-        <button type="button" class="btn btn-secondary" id="clearCartBtn">Xóa giỏ hàng</button>
+    <div class="mb-3">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Phí tạm tính:</span> 
+            <span>
+                <span id="totalAmount" class="fw-bold">@((Model.Sum(m => m.SubTotal * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))))</span> VND
+            </span> 
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Phí giao hàng:</span>
+            <span>
+                <span id="shippingFee" class="fw-bold">0</span> VND
+            </span>
+        </div>
+        <div class="d-flex justify-content-between pt-2 border-top">
+            <span class="h5 mb-0">Tổng cộng:</span>
+            <span class="h5 mb-0 text-primary">
+                <span id="totalCharge" class="fw-bold">0</span> VND
+            </span>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+        <button type="button" class="btn btn-primary btn-lg" id="checkoutBtn">Thanh toán</button>
+        <button type="button" class="btn btn-outline-secondary btn-lg" id="clearCartBtn">Xóa giỏ hàng</button> 
     </div>
 </div>
 

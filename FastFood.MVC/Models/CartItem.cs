@@ -31,6 +31,6 @@ namespace FastFood.MVC.Models
 			DiscountedPrice = PromotionHelper.GetDiscountedPrice(UnitPrice, Promotion);
 			SubTotal = PromotionHelper.GetSubtotal(UnitPrice, Quantity, Promotion);
 		}
-		public DateTime CreatedAt { get; set; }
+		public DateTime CreatedAt { get; set; } = DateTime.Now;
 	}
 }
