@@ -347,8 +347,8 @@ namespace FastFood.MVC.Controllers
             });
 		}
 
-        // AJAX endpoint for cancelling an order
-        [HttpPost]
+		// AJAX endpoint for cancelling an order
+		[HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int orderID, string note)
         {
