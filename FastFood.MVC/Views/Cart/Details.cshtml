@@ -107,6 +107,7 @@
                 var productID = button.data('productid');
                 var currentQty = parseInt($('.item-quantity').text());
                 var quantity = button.hasClass('btn-increase') ? currentQty + 1 : currentQty - 1;
+                var token = $('input[name="__RequestVerificationToken"]').val();
 
                 if (quantity < 1) {
                     if (!confirm('Số lượng sẽ giảm về 0. Bạn có muốn xóa sản phẩm này khỏi giỏ hàng?')) {
@@ -117,7 +118,11 @@
                 $.ajax({
                     type: 'POST',
                     url: '/Cart/UpdateCart',
-                    data: { productID: productID, quantity: quantity },
+                    data: { 
+                        productID: productID,
+                        quantity: quantity,
+                        __RequestVerificationToken: token
+                    },
                     success: function (response) {
                         if (response.success) {
                             if (quantity <= 0) {
@@ -146,13 +151,17 @@
                 e.preventDefault();
                 let productId = $(this).data('productid');
                 let productName = '@Model.ProductName';
+                var token = $('input[name="__RequestVerificationToken"]').val();
 
                 if (!confirm('Bạn có chắc muốn xóa món "' + productName + '" khỏi giỏ hàng?')) return;
 
                 $.ajax({
                     url: '/Cart/RemoveFromCart',
                     method: 'POST',
-                    data: { productID: productId },
+                    data: { 
+                        productID: productId,
+                        __RequestVerificationToken: token
+                    },
                     success: function (response) {
                         if (response.success) {
                             window.location.href = '/Cart/Index';

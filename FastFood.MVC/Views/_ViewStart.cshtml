@@ -3,10 +3,10 @@
 
 @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeOrShipperAccess")).Succeeded)
 {
-    Layout = "_AdminLayout.cshtml";
+    Layout = "Views/Shared/_AdminLayout.cshtml";
 }
 else
 {
-    Layout = "_Layout.cshtml";
+    Layout = "Views/Shared/_Layout.cshtml";
 }
 

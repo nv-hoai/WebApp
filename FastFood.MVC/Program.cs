@@ -48,8 +48,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddTransient<IEmailSender, EmailSenderService>();
 builder.Services.AddScoped<AzureBlobService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddAuthorizationBuilder()
@@ -59,7 +61,7 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("CustomerAccess", policy => policy.RequireRole("Customer"))
     .AddPolicy("AdminOrEmployeeAccess", policy =>
         policy.RequireRole("Admin", "Employee"))
-    .AddPolicy("OrderManagementAccess", policy =>
+    .AddPolicy("AdminOrEmployeeOrShipperAccess", policy =>
         policy.RequireRole("Admin", "Employee", "Shipper"));
 
 builder.Services.AddDistributedMemoryCache(); 

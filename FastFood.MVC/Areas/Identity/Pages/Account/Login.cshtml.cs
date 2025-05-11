@@ -120,9 +120,13 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account
                     _logger.LogInformation("User logged in.");
                     var user = await _userManager.FindByEmailAsync(Input.Email);
                     var roles = await _userManager.GetRolesAsync(user);
-                    if (roles.Contains("Admin") || roles.Contains("Employee") || roles.Contains("Shipper"))
+                    if (roles.Contains("Admin") || roles.Contains("Employee"))
                     {
                         return RedirectToAction("DashBoard", "Admin", new { area = "" }); 
+                    }
+                    if (roles.Contains("Shipper"))
+                    {
+                        return RedirectToAction("Index", "Order", new { area = "" });
                     }
                     return LocalRedirect(returnUrl);
                 }

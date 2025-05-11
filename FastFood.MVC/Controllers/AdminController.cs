@@ -71,7 +71,7 @@ namespace FastFood.MVC.Controllers
 
             return View(model);
         }
-        [Authorize(Policy = "AdminOrEmployeeOrShipperAccess")]
+        [Authorize(Policy = "AdminOrEmployeeAccess")]
         public async Task<IActionResult> Dashboard()
         {
             var viewModel = await _dashboardService.GetDashboardDataAsync();

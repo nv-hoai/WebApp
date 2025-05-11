@@ -1,8 +1,8 @@
-﻿@model FastFood.MVC.ViewModels.MessageViewModel
+﻿@model Message
 
 @{
     ViewData["Title"] = "Liên hệ Jollibee";
-	Layout = "~/Views/Shared/_IdentityLayout.cshtml";
+    Layout = "~/Views/Shared/_IdentityLayout.cshtml";
 }
 
 <h1 class="text-center text-danger fw-bold mb-4" style="font-size: 2.5rem;">LIÊN HỆ BURGZ</h1>
@@ -18,15 +18,16 @@
         <!-- Contact Form -->
         <h4 class="fw-bold mt-4 mb-3">Gửi tin nhắn cho chúng tôi</h4>
         <form asp-controller="Home" asp-action="Contact">
+            @if (TempData["SuccessMessage"] != null)
+			{
+				<div class="alert alert-success">
+                    @TempData["SuccessMessage"]
+				</div>
+			}
             <div class="mb-3">
                 <label asp-for="SenderName" class="control-label"></label>
                 <input asp-for="SenderName" class="form-control" />
                 <span asp-validation-for="SenderName" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="PhoneNumber" class="control-label"></label>
-                <input asp-for="PhoneNumber" class="form-control" />
-                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label asp-for="Email" class="control-label"></label>
@@ -34,18 +35,31 @@
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="Message" class="control-label"></label>
-                <textarea asp-for="Message" class="form-control"></textarea>
+                <label asp-for="PhoneNumber" class="control-label"></label>
+                <input asp-for="PhoneNumber" class="form-control" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Content" class="control-label"></label>
+                <textarea asp-for="Content" class="form-control"></textarea>
                 <span asp-validation-for="SenderName" class="text-danger"></span>
             </div>
-            <button type="submit" class="btn btn-danger">Gửi</button>
+            <div class="mb-3">
+				<input type="submit" value="Gửi tin nhắn" class="btn btn-danger" />
+            </div>
         </form>
     </div>
 
     <!-- Google Map -->
     <div class="col-md-6">
         <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3833.842504732472!2d108.14729407498015!3d16.073660584606504!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x314218d68dff9545%3A0x714561e9f3a7292c!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBCw6FjaCBLaG9hIC0gxJDhuqFpIGjhu41jIMSQw6AgTuG6tW5n!5e0!3m2!1svi!2s!4v1745160783853!5m2!1svi!2s" 
-            width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+            width="600" height="550" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
         </iframe>
     </div>
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using FastFood.MVC.Data;
 using FastFood.MVC.Models;
+using FastFood.MVC.Services;
 using FastFood.MVC.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,16 @@ namespace FastFood.MVC.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
+        private readonly MessageService _messageService;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
+        public HomeController(
+            ILogger<HomeController> logger,
+            ApplicationDbContext context,
+            MessageService messageService)
         {
             _logger = logger;
             _context = context;
+            _messageService = messageService;
         }
 
         public async Task<IActionResult> Index()
@@ -60,19 +66,23 @@ namespace FastFood.MVC.Controllers
 
         public IActionResult Contact()
         {
-            MessageViewModel model = new MessageViewModel();
+            Message model = new Message();
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Contact(MessageViewModel model)
+        public async Task<IActionResult> Contact(Message model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction("Index");
+                return View(model);
             }
-            return View(model);
+
+            await _messageService.CreateMessageAsync(model);
+
+            TempData["SuccessMessage"] = "Cảm ơn bạn đã liên hệ với chúng tôi. Chúng tôi sẽ phản hồi trong thời gian sớm nhất!";
+            return RedirectToAction(nameof(Contact));
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
