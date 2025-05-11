@@ -127,14 +127,18 @@ else
                                         <a class="d-block h5 mb-2" asp-controller="Product"
                                            asp-action="Details" asp-route-id="@product.ProductID">@product.Name</a>
                                         <p class="text-body">@product.Description</p>
-                                        <span class="text-primary me-1">@product.Price VND</span>
+                                        <span class="text-primary me-1">@((product.Price * 1000).ToString("#,##0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))) VND</span>
                                     </div>
                                     <div class="d-flex border-top">
-                                        <small class="w-50 text-center border-end py-2">
-                                            <a class="text-body" asp-controller="Order" asp-action="Index">Đặt ngay</a>
+                                        <small class="w-50 text-center py-2">
+                                            <button onclick="createOrderNow(@product.ProductID)" class="btn btn-link btn-danger text-body">
+                                                Đặt ngay
+                                            </button>
                                         </small>
                                         <small class="w-50 text-center py-2">
-                                            <button onclick="addToCart(@product.ProductID)" class="btn btn-link text-body">Thêm vào giỏ</button>
+                                            <button onclick="addToCart(@product.ProductID)" class="btn btn-link btn-warning text-body">
+                                                Thêm vào giỏ
+                                            </button>
                                         </small>
                                     </div>
                                 </div>
@@ -187,6 +191,42 @@ else
                         alert("Lỗi khi thêm vào giỏ hàng.");
                         console.error("Error details:", error);
                     }
+                }
+            });
+        }
+
+        function createOrderNow(productID) 
+        {
+            const token = $('input[name="__RequestVerificationToken"]').val();
+
+            if (!token) 
+            {
+                console.error("Anti-forgery token not found. Ensure __RequestVerificationToken is present in the form.");
+                alert("Lỗi bảo mật: Không tìm thấy token xác thực.");
+                return;
+            }
+
+            $.ajax 
+             ({
+                type: 'POST',
+                url: '/Cart/CreateCartNow',
+                data: {
+                    productID: productID,
+                    __RequestVerificationToken: token,
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message || 'Đã thêm vào giỏ hàng và đi đến giỏ hàng!');
+                       window.location.href = 'Cart/Index';
+                    }
+                    else {
+                        alert(response.message || 'Lỗi khi nhấn "Đặt ngay"');
+                    }
+                },
+                error: function (xhr) {
+                    console.error("AJAX Error:", xhr); 
+                    const res = xhr.responseJSON;
+                    alert(res?.message || 'Lỗi máy chủ, vui lòng thử lại sau.');
                 }
             });
         }
