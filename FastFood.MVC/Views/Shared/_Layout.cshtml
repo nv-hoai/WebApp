@@ -82,7 +82,10 @@
                             <small class="fa fa-shopping-bag text-body"></small>
                             <span class="cart-badge" id="cartCount">0</span>
                         </a>
-						<partial name="_NotificationPartial" />
+                    }
+                    @if (User.IsInRole("Customer") || User.IsInRole("Admin") || User.IsInRole("Employee") || User.IsInRole("Shipper"))
+                    {
+                        <partial name="_NotificationPartial" />
                     }
                     @* Login section *@
                     <div class="dropdown ms-3">

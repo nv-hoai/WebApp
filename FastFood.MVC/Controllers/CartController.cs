@@ -296,20 +296,10 @@ namespace FastFood.MVC.Controllers
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		[Authorize(Policy = "CustomerAccess")]
 		public async Task<IActionResult> CreateCartNow(int productID)
 		{
 			var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-
-			if (customer == null)
-			{
-				return Json(new
-				{
-					success = false,
-					message = $"Không tìm thấy dữ liệu tài khoản #{userID}"
-				});
-			}
 
 			var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductID == productID);
 			if (product == null)
@@ -333,28 +323,32 @@ namespace FastFood.MVC.Controllers
 			}
 			else
 			{
-				var cart = new CartItem
-				{
-					CustomerID = customer.CustomerID,
-					ProductID = productID,
-					ProductName = product.Name,
-					UnitPrice = product.Price,
-					Quantity = 1,
-				};
-				cart.Calculate();
-				_context.CartItems.Add(cart);
+                // Find best promotion for this product
+                var validPromotions = await GetValidPromotionAsync(productID, product.CategoryID);
+                var bestPromotion = validPromotions.FirstOrDefault();
+
+                var cartItem = new CartItem
+                {
+                    CustomerID = customer.CustomerID,
+                    ProductID = productID,
+                    ProductName = product.Name,
+                    UnitPrice = product.Price,
+                    Quantity = 1,
+                    CreatedAt = DateTime.Now,
+                    // Apply promotion if found
+                    PromotionID = bestPromotion?.PromotionID,
+                    PromotionName = bestPromotion?.Name,
+                    Promotion = bestPromotion
+                };
+                cartItem.Calculate();
+                _context.CartItems.Add(cartItem);
 			}
 
 			await _context.SaveChangesAsync();
 
-			var updatedCartCount = await _context.CartItems
-										 .Where(ci => ci.CustomerID == customer.CustomerID)
-										 .SumAsync(ci => ci.Quantity);
-
 			return Json(new
 			{
 				success = true,
-				cartCount = updatedCartCount,
 			});
 		}
 
