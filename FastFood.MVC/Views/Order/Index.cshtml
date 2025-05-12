@@ -21,20 +21,46 @@
 <h1 class="display-5 mb-4">@ViewData["Title"]</h1>
 <hr />
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <form method="get" asp-action="Index" asp-controller="Order">
-        <div class="d-flex align-items-center gap-3">
-            <div class="input-group" style="width: 300px;">
-                <input type="text" class="form-control" placeholder="Tìm kiếm theo mã đơn hàng..." name="orderId" value="@Context.Request.Query["orderId"]">
-                <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-search"></i>
-                </button>
+    <form method="get" asp-action="Index" asp-controller="Order" class="w-100">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-2">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Mã đơn hàng..." name="orderId" value="@Context.Request.Query["orderId"]">
+                </div>
             </div>
-            <select asp-items="ViewBag.Status" class="form-select" name="status" style="width: 200px;">
-                <option value="">Tất cả trạng thái</option>
-            </select>
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-filter"></i> Lọc
-            </button>
+            <div class="col-md-2">
+                <select asp-items="ViewBag.Status" class="form-select" name="orderStatus">
+                    <option value="">-- Tất cả trạng thái --</option>
+                </select>
+            </div>
+            @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeOrShipperAccess")).Succeeded)
+            {
+                <div class="col-md-2">
+                    <input type="text" class="form-control" placeholder="Tên khách hàng..." name="customerName" value="@Context.Request.Query["customerName"]">
+                </div>
+            }
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <div class="input-group me-2" style="max-width: 180px;">
+                        <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                        <input type="date" class="form-control" name="startDate" value="@Context.Request.Query["startDate"]" placeholder="Từ ngày">
+                    </div>
+                    <div class="input-group" style="max-width: 180px;">
+                        <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                        <input type="date" class="form-control" name="endDate" value="@Context.Request.Query["endDate"]" placeholder="Đến ngày">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary me-2" title="Tìm kiếm">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
+                    <a href="@Url.Action("Index", "Order")" class="btn btn-outline-secondary" title="Xóa bộ lọc">
+                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                    </a>
+                </div>
+            </div>
         </div>
     </form>
 </div>
@@ -78,7 +104,7 @@
                     <td>@item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                     <td>
                         <a asp-action="Details" asp-route-id="@item.OrderID" class="btn btn-info btn-sm">
-                            <i class="fa fa-info-circle"></i> Chi tiết
+                            <i class="bi bi-eye"></i> Chi tiết
                         </a>
 
                         @if ((await AuthorizationService.AuthorizeAsync(User, "EmployeeAccess")).Succeeded)
@@ -107,10 +133,10 @@
                         @if ((await AuthorizationService.AuthorizeAsync(User, "AdminAccess")).Succeeded)
                         {
                             <a asp-action="Edit" asp-route-id="@item.OrderID" class="btn btn-warning btn-sm">
-                                <i class="fa fa-edit"></i> Sửa
+                                <i class="bi bi-eye"></i> Sửa
                             </a>
                             <a asp-action="Delete" asp-route-id="@item.OrderID" class="btn btn-danger btn-sm">
-                                <i class="fa fa-edit"></i> Xóa
+                                <i class="bi bi-pencil-square"></i> Xóa
                             </a>
                         }
 

@@ -1,85 +1,80 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using FastFood.MVC.Data;
 using FastFood.MVC.Models;
-using FastFood.MVC.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using FastFood.MVC.Services;
+using FastFood.MVC.Services.Interfaces;
+using FastFood.MVC.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FastFood.MVC.Controllers
 {
     [Authorize]
     public class OrderController : Controller
     {
+        private readonly IOrderService _orderService;
         private readonly ApplicationDbContext _context;
         private readonly IAuthorizationService _authorization;
-        private readonly NotificationService _notificationService;
 
         public OrderController(
+            IOrderService orderService,
             ApplicationDbContext context,
-            IAuthorizationService authorization,
-            NotificationService notificationService)
+            IAuthorizationService authorization)
         {
+            _orderService = orderService;
             _context = context;
             _authorization = authorization;
-            _notificationService = notificationService;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? orderId, string orderStatus, string customerName, DateTime? startDate, DateTime? endDate)
         {
-            // For Admin and Employee: Show all orders
-            if ((await _authorization.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
-            {
-                var managementOrders = await _context.Orders
-                    .Include(o => o.Customer)
-                        .ThenInclude(c => c.User)
-                    .Include(o => o.Employee)
-                        .ThenInclude(e => e.User)
-                    .Include(o => o.Shipper)
-                        .ThenInclude(s => s.User)
-                    .OrderByDescending(o => o.CreatedAt)
-                    .ToListAsync();
-                return View(managementOrders.AsEnumerable());
-            }
-
-            // For Shipper: Show only orders that are Prepared or ones they are delivering
-            if ((await _authorization.AuthorizeAsync(User, "ShipperAccess")).Succeeded)
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userId);
-
-                if (shipper == null)
+            // Create a SelectList for the OrderStatus enum for the dropdown
+            ViewBag.Status = Enum.GetValues(typeof(OrderStatus))
+                .Cast<OrderStatus>()
+                .Select(e => new SelectListItem
                 {
-                    return NotFound("Shipper profile not found");
-                }
+                    Value = e.ToString(),
+                    Text = GetStatusDisplayName(e),
+                    Selected = !string.IsNullOrEmpty(orderStatus) && e.ToString() == orderStatus
+                }).ToList();
 
-                var shipperOrders = await _context.Orders
-                    .Include(o => o.Customer)
-                        .ThenInclude(c => c.User)
-                    .Include(o => o.Employee)
-                        .ThenInclude(e => e.User)
-                    .Include(o => o.Shipper)
-                        .ThenInclude(e => e.User)
-                    .Where(o => o.Status == OrderStatus.Prepared ||
-                               ((o.Status == OrderStatus.Delivering || o.Status == OrderStatus.Completed) 
-                                    && o.ShipperID == shipper.ShipperID))
-                    .OrderByDescending(o => o.CreatedAt)
-                    .ToListAsync();
-
-                return View(shipperOrders.AsEnumerable());
+            // Parse orderStatus to the enum if provided
+            OrderStatus? statusFilter = null;
+            if (!string.IsNullOrEmpty(orderStatus) && Enum.TryParse<OrderStatus>(orderStatus, out var parsedStatus))
+            {
+                statusFilter = parsedStatus;
             }
 
-            // For Customer: Show their own orders
-            var customerOrders = await _context.Orders
-                .Include(o => o.Customer)
-                    .ThenInclude(c => c.User)
-                .Where(o => o.Customer.UserID == User.FindFirstValue(ClaimTypes.NameIdentifier))
-                .OrderByDescending(o => o.CreatedAt)
-                .ToListAsync();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = (await _authorization.AuthorizeAsync(User, "AdminAccess")).Succeeded;
+            var isEmployee = (await _authorization.AuthorizeAsync(User, "EmployeeAccess")).Succeeded;
+            var isShipper = (await _authorization.AuthorizeAsync(User, "ShipperAccess")).Succeeded;
 
-            return View(customerOrders.AsEnumerable());
+            int? shipperId = null;
+            if (isShipper)
+            {
+                var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userId);
+                shipperId = shipper?.ShipperID;
+            }
+
+            // Build query parameters
+            var parameters = new OrderQueryParameters
+            {
+                OrderId = orderId,
+                UserId = userId,
+                Status = statusFilter,
+                CustomerName = customerName,
+                StartDate = startDate,
+                EndDate = endDate,
+                IsAdmin = isAdmin,
+                IsEmployee = isEmployee,
+                IsShipper = isShipper,
+                ShipperId = shipperId
+            };
+
+            // Get orders using service
+            var orders = await _orderService.GetOrdersAsync(parameters);
+            return View(orders);
         }
 
         public async Task<IActionResult> Details(int? id)
@@ -89,76 +84,19 @@ namespace FastFood.MVC.Controllers
                 return NotFound();
             }
 
-            // For Admin, Employee: Can view any order details
-            if ((await _authorization.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
-            {
-                var managementOrder = await _context.Orders
-                    .Include(o => o.Customer)
-                        .ThenInclude(c => c.User)
-                    .Include(o => o.Employee)
-                        .ThenInclude(e => e.User)
-                    .Include(o => o.Shipper)
-                        .ThenInclude(s => s.User)
-                    .Include(o => o.OrderDetails)
-                        .ThenInclude(o => o.Product)
-                    .Include(o => o.OrderDetails)
-                        .ThenInclude(o => o.Promotion)
-                    .FirstOrDefaultAsync(o => o.OrderID == id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = (await _authorization.AuthorizeAsync(User, "AdminAccess")).Succeeded;
+            var isEmployee = (await _authorization.AuthorizeAsync(User, "EmployeeAccess")).Succeeded;
+            var isShipper = (await _authorization.AuthorizeAsync(User, "ShipperAccess")).Succeeded;
 
-                if (managementOrder == null)
-                {
-                    return NotFound();
-                }
+            var order = await _orderService.GetOrderByIdAsync(id.Value, userId, isAdmin, isEmployee, isShipper);
 
-                return View(managementOrder);
-            }
-
-            // For Shipper: Can view orders they're delivering or that are ready for pickup (Processing)
-            if ((await _authorization.AuthorizeAsync(User, "ShipperAccess")).Succeeded)
-            {
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userId);
-
-                if (shipper == null)
-                {
-                    return NotFound("Shipper profile not found");
-                }
-
-                var shipperOrder = await _context.Orders
-                    .Include(o => o.Customer)
-                        .ThenInclude(c => c.User)
-                    .Include(o => o.Employee)
-                        .ThenInclude(e => e.User)
-                    .Include(o => o.Shipper)
-                        .ThenInclude(e => e.User)
-                    .Include(o => o.OrderDetails)
-                        .ThenInclude(o => o.Product)
-                    .FirstOrDefaultAsync(o => o.OrderID == id &&
-                                          (o.Status == OrderStatus.Prepared ||
-                                          (o.Status == OrderStatus.Delivering && o.ShipperID == shipper.ShipperID)));
-
-                if (shipperOrder == null)
-                {
-                    return NotFound("Order not found or you don't have permission to view it");
-                }
-
-                return View(shipperOrder);
-            }
-
-            // For Customer: Can only view their own orders
-            var customerOrder = await _context.Orders
-                .Include(o => o.Customer)
-                    .ThenInclude(c => c.User)
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(o => o.Product)
-                .FirstOrDefaultAsync(o => o.Customer.UserID == User.FindFirstValue(ClaimTypes.NameIdentifier) && o.OrderID == id);
-
-            if (customerOrder == null)
+            if (order == null)
             {
                 return NotFound();
             }
 
-            return View(customerOrder);
+            return View(order);
         }
 
         [Authorize(Policy = "AdminAccess")]
@@ -178,8 +116,7 @@ namespace FastFood.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(order);
-                await _context.SaveChangesAsync();
+                await _orderService.CreateOrderAsync(order);
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CustomerID"] = new SelectList(_context.Customers, "CustomerID", "CustomerID", order.CustomerID);
@@ -196,7 +133,8 @@ namespace FastFood.MVC.Controllers
                 return NotFound();
             }
 
-            var order = await _context.Orders.FindAsync(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var order = await _orderService.GetOrderByIdAsync(id.Value, userId, isAdmin: true);
             if (order == null)
             {
                 return NotFound();
@@ -219,21 +157,10 @@ namespace FastFood.MVC.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                bool success = await _orderService.UpdateOrderAsync(order);
+                if (!success)
                 {
-                    _context.Update(order);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!OrderExists(order.OrderID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -251,11 +178,8 @@ namespace FastFood.MVC.Controllers
                 return NotFound();
             }
 
-            var order = await _context.Orders
-                .Include(o => o.Customer)
-                .Include(o => o.Employee)
-                .Include(o => o.Shipper)
-                .FirstOrDefaultAsync(m => m.OrderID == id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var order = await _orderService.GetOrderByIdAsync(id.Value, userId, isAdmin: true);
             if (order == null)
             {
                 return NotFound();
@@ -269,19 +193,8 @@ namespace FastFood.MVC.Controllers
         [Authorize(Policy = "AdminAccess")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
-            if (order != null)
-            {
-                _context.Orders.Remove(order);
-            }
-
-            await _context.SaveChangesAsync();
+            await _orderService.DeleteOrderAsync(id);
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool OrderExists(int id)
-        {
-            return _context.Orders.Any(e => e.OrderID == id);
         }
 
         [HttpPost]
@@ -292,130 +205,36 @@ namespace FastFood.MVC.Controllers
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
 
-            var carts = await _context.CartItems
-                                    .Include(c => c.Promotion)
-                                    .Where(c => c.CustomerID == customer.CustomerID)
-                                    .ToListAsync();
-
-            if (carts == null || !carts.Any())
+            if (customer == null)
             {
-				return Json(new 
-                { 
-                    success = false, 
-                    message = "Giỏ hàng trống." 
-                });
-			}
+                return Json(new { success = false, message = "Customer not found" });
+            }
 
-            //Tạo đơn hàng
-            var order = new Order
+            var order = await _orderService.CreateOrderFromCartAsync(customer.CustomerID, address, shippingMethod);
+
+            if (order == null)
             {
-                CustomerID = customer.CustomerID,
-                Address = address,
-                ShippingMethod = shippingMethod,
-                CreatedAt = DateTime.Now,
-                Status = OrderStatus.Pending
-            };
+                return Json(new { success = false, message = "Giỏ hàng trống." });
+            }
 
-            //Tạo chi tiết đơn hàng
-            foreach(var item in carts)
-            {
-				var orderDetail = new OrderDetail
-				{
-                    OrderID = order.OrderID,
-					ProductID = item.ProductID,
-                    ProductName = item.ProductName,
-                    UnitPrice = item.UnitPrice,
-					Quantity = item.Quantity,
-                    PromotionID = item.PromotionID,
-                    PromotionName = item.PromotionName,
-                    Promotion = item.Promotion,
-                };
+            return Json(new { success = true });
+        }
 
-                orderDetail.CalculatePrices();
-                order.OrderDetails.Add(orderDetail);
-			}
-
-			order.CalculateTotalCharge();
-
-			_context.Orders.Add(order);
-            _context.CartItems.RemoveRange(carts);
-			await _context.SaveChangesAsync();
-
-			return Json(new 
-            { 
-                success = true
-            });
-		}
-
-		// AJAX endpoint for cancelling an order
-		[HttpPost]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int orderID, string note)
         {
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            Order? order = null;
+            var isAdminOrEmployee = (await _authorization.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded;
 
-            // Admin or Employee can cancel any order
-            if ((await _authorization.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded)
+            var success = await _orderService.CancelOrderAsync(orderID, userID, note, isAdminOrEmployee);
+
+            if (!success)
             {
-                order = await _context.Orders
-                    .Include(o => o.Customer)
-                    .FirstOrDefaultAsync(o => o.OrderID == orderID);
-                if (order == null)
-                {
-                    return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID}." });
-                }
-                order.Status = OrderStatus.Cancelled;
-                order.CancelledAt = DateTime.Now;
-                order.Note = note;
-                await _notificationService.CreateNotification(
-                    order.Customer.UserID,
-                    $"Đơn hàng #{orderID} đã bị hủy với lí do {note}.",
-                    $"/Order/Details/{orderID}",
-                    "fa-check-circle"
-                );
-
-                await _context.SaveChangesAsync();
-                return Json(new
-                {
-                    success = true,
-                    message = $"Đơn hàng #{orderID} đã được hủy."
-                });
+                return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID} hoặc không thể hủy." });
             }
 
-            // Customers can only cancel their own orders in Pending state
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userID);
-            if (customer == null)
-            {
-                return Json(new { success = false, message = "Bạn không có quyền thực hiện chức năng này" });
-            }
-
-            order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderID == orderID && o.CustomerID == customer.CustomerID);
-
-            if (order == null)
-            {
-                return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID}." });
-            }
-
-            if (order.Status != OrderStatus.Pending)
-            {
-                return Json(new
-                {
-                    success = false,
-                    message = $"Không thể hủy đơn hàng #{orderID}."
-                });
-            }
-
-            order.Status = OrderStatus.Cancelled;
-            order.CancelledAt = DateTime.Now;
-            order.Note = note;
-            await _context.SaveChangesAsync();
-
-            return Json(new
-            {
-                success = true,
-                message = $"Đơn hàng #{orderID} đã được hủy."
-            });
+            return Json(new { success = true, message = $"Đơn hàng #{orderID} đã được hủy." });
         }
 
         [HttpPost]
@@ -426,75 +245,36 @@ namespace FastFood.MVC.Controllers
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserID == userID);
 
-            var order = await _context.Orders
-                    .Include(o => o.Customer)
-                    .FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Pending);
+            if (employee == null)
+            {
+                return Json(new { success = false, message = "Employee profile not found" });
+            }
 
-            if (order == null)
+            var success = await _orderService.AcceptOrderAsync(orderID, employee.EmployeeID);
+
+            if (!success)
             {
                 return Json(new { success = false, message = $"Order #{orderID} not found or is not in Pending state" });
             }
 
-            await _notificationService.CreateNotification(
-                order.Customer.UserID,
-                $"Đơn hàng #{orderID} đã được xác nhận và đang chuẩn bị.",
-                $"/Order/Details/{orderID}",
-                "fa-check-circle"
-            );
-
-            // Assign the employee to the order and update status
-            order.EmployeeID = employee.EmployeeID;
-            order.Status = OrderStatus.Processing;
-            order.ProcessingAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-
             return Json(new { success = true, message = $"Order #{orderID} has been accepted and is now being processed" });
         }
 
-        // Employee marks order as ready for delivery: Processing -> Prepared
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "EmployeeAccess")]
         public async Task<IActionResult> MarkAsPrepared(int orderID)
         {
-            var order = await _context.Orders
-                .Include(o => o.Customer)
-                .FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Processing);
+            var success = await _orderService.MarkOrderAsPreparedAsync(orderID);
 
-            if (order == null)
+            if (!success)
             {
                 return Json(new { success = false, message = $"Order #{orderID} not found or is not in Processing state" });
             }
 
-            await _notificationService.CreateNotification(
-                order.Customer.UserID,
-                $"Đơn hàng #{orderID} đã được chuẩn bị xong và sắp được giao.",
-                $"/Order/Details/{orderID}",
-                "fa-check-circle"
-            );
-
-            var shippers = await _context.Shippers.ToListAsync();
-            foreach(var shipper in shippers)
-            {
-                await _notificationService.CreateNotification(
-                    shipper.UserID,
-                    $"Có đơn hàng #{orderID} có thể nhận.",
-                    $"/Order/Details/{orderID}",
-                    "fa-check-circle"
-                );
-            }
-
-            // Update status
-            order.Status = OrderStatus.Prepared;
-            order.PreparedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-
             return Json(new { success = true, message = $"Order #{orderID} is now ready for delivery" });
         }
 
-        // Shipper accepts the order for delivery: Prepared -> Delivering
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "ShipperAccess")]
@@ -503,41 +283,21 @@ namespace FastFood.MVC.Controllers
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userID);
 
-            var order = await _context.Orders
-                .Include(o => o.Customer)
-                .Include(o => o.Employee)
-                .FirstOrDefaultAsync(o => o.OrderID == orderID && o.Status == OrderStatus.Prepared);
+            if (shipper == null)
+            {
+                return Json(new { success = false, message = "Shipper profile not found" });
+            }
 
-            if (order == null)
+            var success = await _orderService.AcceptDeliveryAsync(orderID, shipper.ShipperID);
+
+            if (!success)
             {
                 return Json(new { success = false, message = $"Order #{orderID} not found or is not ready for delivery" });
             }
 
-            await _notificationService.CreateNotification(
-                order.Customer.UserID,
-                $"Đơn hàng #{orderID} đang được vận chuyển đến khách hàng.",
-                $"/Order/Details/{orderID}",
-                "fa-check-circle"
-            );
-
-            await _notificationService.CreateNotification(
-                order.Employee!.UserID,
-                $"Đơn hàng #{orderID} đang được vận chuyển đến khách hàng.",
-                $"/Order/Details/{orderID}",
-                "fa-check-circle"
-            );
-
-            // Assign the shipper to the order and update status
-            order.ShipperID = shipper!.ShipperID;
-            order.Status = OrderStatus.Delivering;
-            order.DeliveringAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-
             return Json(new { success = true, message = $"You have accepted order #{orderID} for delivery" });
         }
 
-        // Shipper marks the order as delivered: Delivering -> Completed
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "ShipperAccess")]
@@ -546,55 +306,33 @@ namespace FastFood.MVC.Controllers
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var shipper = await _context.Shippers.FirstOrDefaultAsync(s => s.UserID == userID);
 
-            var order = await _context.Orders
-                .Include(o => o.Customer)
-                .Include(o => o.Employee)
-                .FirstOrDefaultAsync(o => o.OrderID == orderID &&
-                                        o.Status == OrderStatus.Delivering &&
-                                        o.ShipperID == shipper!.ShipperID);
-            
-            if (order == null)
+            if (shipper == null)
+            {
+                return Json(new { success = false, message = "Shipper profile not found" });
+            }
+
+            var success = await _orderService.MarkOrderAsDeliveredAsync(orderID, shipper.ShipperID);
+
+            if (!success)
             {
                 return Json(new { success = false, message = $"Order #{orderID} not found or not assigned to you for delivery" });
             }
 
-
-            await _notificationService.CreateNotification(
-                order.Customer.UserID,
-                $"Đơn hàng #{orderID} đã hoàn thành.",
-                $"/Order/Details/{orderID}",
-                "fa-check-circle"
-            );
-
-
-            await _notificationService.CreateNotification(
-                order.Employee!.UserID,
-                $"Đơn hàng #{orderID} đã hoàn thành.",
-                $"/Order/Details/{orderID}",
-                "fa-check-circle"
-            );
-
-            var orderDetails = await _context.OrderDetails
-                .Include(od => od.Product)
-                .Where(od => od.OrderID == orderID)
-                .ToListAsync();
-
-            foreach (var orderDetail in orderDetails)
-            {
-                var product = await _context.Products.FindAsync(orderDetail.ProductID);
-                if (product != null)
-                {
-                    product.SoldQuantity += orderDetail.Quantity;
-                }
-            }
-
-            // Update status and completion time
-            order.Status = OrderStatus.Completed;
-            order.CompletedAt = DateTime.Now;
-
-            await _context.SaveChangesAsync();
-
             return Json(new { success = true, message = $"Order #{orderID} has been marked as delivered" });
+        }
+
+        private string GetStatusDisplayName(OrderStatus status)
+        {
+            return status switch
+            {
+                OrderStatus.Pending => "Chờ xác nhận",
+                OrderStatus.Processing => "Đang chế biến",
+                OrderStatus.Prepared => "Sẵn sàng giao",
+                OrderStatus.Delivering => "Đang giao hàng",
+                OrderStatus.Completed => "Hoàn thành",
+                OrderStatus.Cancelled => "Đã hủy",
+                _ => status.ToString()
+            };
         }
     }
 }

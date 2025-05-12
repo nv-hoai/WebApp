@@ -154,10 +154,10 @@
                                             </div>
                                             <div class="d-flex border-top">
                                                 <small class="w-50 text-center border-end py-2">
-                                                    <a class="text-body" asp-controller="Order" asp-action="Index">Đặt ngay</a>
+                                                    <a onclick="createOrderNow(@product.ProductID)" class="btn text-body">Đặt ngay</a>
                                                 </small>
                                                 <small class="w-50 text-center py-2">
-                                                    <a class="text-body" asp-controller="Order" asp-action="Index">Thêm vào giỏ</a>
+                                                    <a onclick="addToCart(@product.ProductID)" class="btn text-body">Thêm vào giỏ</a>
                                                 </small>
                                             </div>
                                         </div>
@@ -244,3 +244,96 @@
     </div>
 </div>
 <!-- Blog End -->
+@section Scripts
+{
+    @Html.AntiForgeryToken()
+    <script>
+        function addToCart(productID, quantity = 1) {
+            const token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                type: "POST",
+                url: '/Cart/AddToCart',
+                data: {
+                    productID: productID,
+                    quantity: quantity,
+                    __RequestVerificationToken: token
+                },
+                success: function (response) {
+                    if (response.success) {
+                        $('#cartCount')
+                            .fadeOut(100, function () {
+                                $(this).text(response.cartCount).fadeIn(100);
+                            });
+
+                        alert(response.message || "Đã thêm vào giỏ hàng!");
+
+                        if (typeof updateCartBadge === "function") {
+                            updateCartBadge();
+                        }
+                    } else {
+                        alert(response.message || "Đã xảy ra lỗi.");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    if (xhr.status === 401) {
+                        if (confirm("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng. Đăng nhập ngay?")) {
+                            window.location.href = '/Identity/Account/Login?ReturnUrl=' + encodeURIComponent(window.location.pathname);
+                        }
+                    } else {
+                        alert("Lỗi khi thêm vào giỏ hàng.");
+                        console.error("Error details:", error);
+                    }
+                }
+            });
+        }
+
+        function createOrderNow(productID)
+        {
+            const token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax
+             ({
+                type: 'POST',
+                url: '/Cart/CreateCartNow',
+                data: {
+                    productID: productID,
+                    __RequestVerificationToken: token,
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message || 'Đã thêm vào giỏ hàng và đi đến giỏ hàng!');
+                       window.location.href = 'Cart/Index';
+
+                        if (typeof updateCartBadge === "function") {
+                            updateCartBadge();
+                        }
+                    }
+                    else {
+                        alert(response.message || 'Lỗi khi nhấn "Đặt ngay"');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    if (xhr.status === 401) {
+                        if (confirm("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng. Đăng nhập ngay?")) {
+                            window.location.href = '/Identity/Account/Login?ReturnUrl=' + encodeURIComponent(window.location.pathname);
+                        }
+                    } else {
+                        alert("Lỗi khi thêm vào giỏ hàng.");
+                        console.error("Error details:", error);
+                    }
+                }
+            });
+        }
+
+        function updateCartBadge() {
+            fetch('/Cart/GetCartCount')
+                .then(res => res.json())
+                .then(data => {
+                    $('#cartCount').fadeOut(100, function () {
+                        $(this).text(data.count).fadeIn(100);
+                    });
+                });
+        }
+    </script>
+}

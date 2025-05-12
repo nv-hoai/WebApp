@@ -54,7 +54,7 @@
                     <td>@item.ProductName</td>
                     <td class="text-center">
                         <button type="button" class="btn-decrease btn btn-danger btn-sm" style="color:white" data-productid="@item.ProductID">-</button>
-                        <span class="item-quantity btn btn-info" style="background-color:transparent">@item.Quantity</span>
+                        <span class="item-quantity btn btn-info" style="background-color:transparent; padding: 2.5px">@item.Quantity</span>
                         <button type="button" class="btn-increase btn btn-success btn-sm" data-productid="@item.ProductID">+</button>
                     </td>
                     <td class="text-decoration-line-through text-muted me-2 text-center">
@@ -82,7 +82,7 @@
                            class="btn btn-info">
                             Chi tiết
                         </a>
-                        <button class="btn btn-danger" data-productid="@item.ProductID">
+                        <button class="btn-delete btn btn-danger" data-productid="@item.ProductID">
                             Xóa
                         </button>
                     </td>

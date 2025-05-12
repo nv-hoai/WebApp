@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using FastFood.MVC.Services;
-using Microsoft.AspNetCore.Authorization;
+using FastFood.MVC.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +52,7 @@ builder.Services.AddTransient<IEmailSender, EmailSenderService>();
 builder.Services.AddScoped<AzureBlobService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<MessageService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddAuthorizationBuilder()

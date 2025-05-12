@@ -1,6 +1,6 @@
 using FastFood.MVC.ViewModels;
 
-namespace FastFood.MVC.Services
+namespace FastFood.MVC.Services.Interfaces
 {
     public interface IDashboardService
     {
