@@ -21,6 +21,7 @@ namespace FastFood.MVC.ViewModels
         [Required]
         [DataType(DataType.PhoneNumber)]
         [Display(Name = "Số điện thoại")]
+        [StringLength(10, MinimumLength = 10, ErrorMessage = "The phone must be 10 numbers")]
         public string PhoneNumber { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "The passsword is required.")]

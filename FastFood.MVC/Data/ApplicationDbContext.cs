@@ -35,6 +35,10 @@ namespace FastFood.MVC.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<ApplicationUser>()
+                .HasIndex(u => u.PhoneNumber)
+                .IsUnique();
+
             modelBuilder.Entity<Admin>()
                 .HasOne(c => c.User)
                 .WithOne(a => a.Admin)

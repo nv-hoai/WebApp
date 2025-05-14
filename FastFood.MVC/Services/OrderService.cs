@@ -132,7 +132,7 @@ namespace FastFood.MVC.Services
                     .FirstOrDefaultAsync(o => 
                         o.OrderID == id && (
                             o.Status == OrderStatus.Prepared ||
-                            (o.Status == OrderStatus.Delivering && o.ShipperID == shipper.ShipperID)
+                            ((o.Status == OrderStatus.Delivering || o.Status == OrderStatus.Completed) && o.ShipperID == shipper.ShipperID)
                         ));
             }
             
@@ -195,10 +195,21 @@ namespace FastFood.MVC.Services
             _context.CartItems.RemoveRange(carts);
             await _context.SaveChangesAsync();
 
+            var employees = await _context.Employees.ToListAsync();
+            foreach (var employee in employees)
+            {
+                await _notificationService.CreateNotification(
+                    employee.UserID,
+                    $"Có đơn hàng mới #{order.OrderID} cần xử lý.",
+                    $"/Order/Details/{order.OrderID}",
+                    "fa-check-circle"
+                );
+            }
+
             return order;
         }
 
-        public async Task<bool> CancelOrderAsync(int orderId, string userId, string note, bool isAdminOrEmployee = false)
+        public async Task<(bool Success, string ErrorMessage, Order CurrentOrder)> CancelOrderAsync(int orderId, string userId, string note, bool isAdminOrEmployee = false)
         {
             Order order;
 
@@ -211,164 +222,311 @@ namespace FastFood.MVC.Services
             else
             {
                 var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userId);
-                if (customer == null) return false;
+                if (customer == null)
+                    return (false, "Customer not found", null);
 
-                order = await _context.Orders.FirstOrDefaultAsync(o => 
+                order = await _context.Orders.FirstOrDefaultAsync(o =>
                     o.OrderID == orderId && o.CustomerID == customer.CustomerID && o.Status == OrderStatus.Pending);
             }
 
-            if (order == null) return false;
+            if (order == null)
+                return (false, $"Order #{orderId} not found", null);
+
+            if (order.Status == OrderStatus.Cancelled)
+                return (false, $"Order #{orderId} is already cancelled", order);
 
             order.Status = OrderStatus.Cancelled;
             order.CancelledAt = DateTime.Now;
             order.Note = note;
 
-            if (isAdminOrEmployee)
+            try
             {
-                await _notificationService.CreateNotification(
-                    order.Customer.UserID,
-                    $"Đơn hàng #{orderId} đã bị hủy với lí do {note}.",
-                    $"/Order/Details/{orderId}",
-                    "fa-check-circle"
-                );
-            }
+                if (isAdminOrEmployee)
+                {
+                    await _notificationService.CreateNotification(
+                        order.Customer.UserID,
+                        $"Đơn hàng #{orderId} đã bị hủy với lí do {note}.",
+                        $"/Order/Details/{orderId}",
+                        "fa-check-circle"
+                    );
+                }
 
-            await _context.SaveChangesAsync();
-            return true;
+                await _context.SaveChangesAsync();
+                return (true, string.Empty, order);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Get the current database values
+                var entry = _context.Entry(order);
+                await entry.ReloadAsync();
+
+                // Check if the order state still allows cancellation
+                if (order.Status != OrderStatus.Pending && !isAdminOrEmployee)
+                    return (false, "Order cannot be cancelled because it's already being processed", order);
+
+                // Try updating again with reloaded entity
+                order.Status = OrderStatus.Cancelled;
+                order.CancelledAt = DateTime.Now;
+                order.Note = note;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return (true, string.Empty, order);
+                }
+                catch
+                {
+                    return (false, "Concurrency conflict when cancelling order. Please try again.", order);
+                }
+            }
         }
 
-        public async Task<bool> AcceptOrderAsync(int orderId, int employeeId)
+        public async Task<(bool Success, string ErrorMessage, Order CurrentOrder)> AcceptOrderAsync(int orderId, int employeeId)
         {
             var order = await _context.Orders
                 .Include(o => o.Customer)
                 .FirstOrDefaultAsync(o => o.OrderID == orderId && o.Status == OrderStatus.Pending);
 
-            if (order == null) return false;
-
-            await _notificationService.CreateNotification(
-                order.Customer.UserID,
-                $"Đơn hàng #{orderId} đã được xác nhận và đang chuẩn bị.",
-                $"/Order/Details/{orderId}",
-                "fa-check-circle"
-            );
+            if (order == null)
+                return (false, $"Order #{orderId} not found or not in Pending state", null);
 
             order.EmployeeID = employeeId;
             order.Status = OrderStatus.Processing;
             order.ProcessingAt = DateTime.Now;
 
-            await _context.SaveChangesAsync();
-            return true;
+            try
+            {
+                await _notificationService.CreateNotification(
+                    order.Customer.UserID,
+                    $"Đơn hàng #{orderId} đã được xác nhận và đang chuẩn bị.",
+                    $"/Order/Details/{orderId}",
+                    "fa-check-circle"
+                );
+
+                await _context.SaveChangesAsync();
+                return (true, string.Empty, order);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Get the current database values
+                var entry = _context.Entry(order);
+                await entry.ReloadAsync();
+
+                // Check if the order is still in a state that allows acceptance
+                if (order.Status != OrderStatus.Pending)
+                    return (false, $"Order #{orderId} can no longer be accepted because its status has changed", order);
+
+                // Try updating again with reloaded entity
+                order.EmployeeID = employeeId;
+                order.Status = OrderStatus.Processing;
+                order.ProcessingAt = DateTime.Now;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return (true, string.Empty, order);
+                }
+                catch
+                {
+                    return (false, "Concurrency conflict when accepting order. Please try again.", order);
+                }
+            }
         }
 
-        public async Task<bool> MarkOrderAsPreparedAsync(int orderId)
+        public async Task<(bool Success, string ErrorMessage, Order CurrentOrder)> MarkOrderAsPreparedAsync(int orderId)
         {
             var order = await _context.Orders
                 .Include(o => o.Customer)
                 .FirstOrDefaultAsync(o => o.OrderID == orderId && o.Status == OrderStatus.Processing);
 
-            if (order == null) return false;
-
-            await _notificationService.CreateNotification(
-                order.Customer.UserID,
-                $"Đơn hàng #{orderId} đã được chuẩn bị xong và sắp được giao.",
-                $"/Order/Details/{orderId}",
-                "fa-check-circle"
-            );
-
-            var shippers = await _context.Shippers.ToListAsync();
-            foreach (var shipper in shippers)
-            {
-                await _notificationService.CreateNotification(
-                    shipper.UserID,
-                    $"Có đơn hàng #{orderId} có thể nhận.",
-                    $"/Order/Details/{orderId}",
-                    "fa-check-circle"
-                );
-            }
+            if (order == null)
+                return (false, $"Order #{orderId} not found or not in Processing state", null);
 
             order.Status = OrderStatus.Prepared;
             order.PreparedAt = DateTime.Now;
 
-            await _context.SaveChangesAsync();
-            return true;
+            try
+            {
+                await _notificationService.CreateNotification(
+                    order.Customer.UserID,
+                    $"Đơn hàng #{orderId} đã được chuẩn bị xong và sắp được giao.",
+                    $"/Order/Details/{orderId}",
+                    "fa-check-circle"
+                );
+
+                var shippers = await _context.Shippers.ToListAsync();
+                foreach (var shipper in shippers)
+                {
+                    await _notificationService.CreateNotification(
+                        shipper.UserID,
+                        $"Có đơn hàng #{orderId} có thể nhận.",
+                        $"/Order/Details/{orderId}",
+                        "fa-check-circle"
+                    );
+                }
+
+                await _context.SaveChangesAsync();
+                return (true, string.Empty, order);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Get the current database values
+                var entry = _context.Entry(order);
+                await entry.ReloadAsync();
+
+                // Check if the order is still in a state that allows marking as prepared
+                if (order.Status != OrderStatus.Processing)
+                    return (false, $"Order #{orderId} cannot be marked as prepared because its status has changed", order);
+
+                // Try updating again with reloaded entity
+                order.Status = OrderStatus.Prepared;
+                order.PreparedAt = DateTime.Now;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return (true, string.Empty, order);
+                }
+                catch
+                {
+                    return (false, "Concurrency conflict when marking order as prepared. Please try again.", order);
+                }
+            }
         }
 
-        public async Task<bool> AcceptDeliveryAsync(int orderId, int shipperId)
+        public async Task<(bool Success, string ErrorMessage, Order CurrentOrder)> AcceptDeliveryAsync(int orderId, int shipperId)
         {
             var order = await _context.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)
                 .FirstOrDefaultAsync(o => o.OrderID == orderId && o.Status == OrderStatus.Prepared);
 
-            if (order == null) return false;
-
-            await _notificationService.CreateNotification(
-                order.Customer.UserID,
-                $"Đơn hàng #{orderId} đang được vận chuyển đến khách hàng.",
-                $"/Order/Details/{orderId}",
-                "fa-check-circle"
-            );
-
-            await _notificationService.CreateNotification(
-                order.Employee!.UserID,
-                $"Đơn hàng #{orderId} đang được vận chuyển đến khách hàng.",
-                $"/Order/Details/{orderId}",
-                "fa-check-circle"
-            );
+            if (order == null)
+                return (false, $"Order #{orderId} not found or not in Prepared state", null);
 
             order.ShipperID = shipperId;
             order.Status = OrderStatus.Delivering;
             order.DeliveringAt = DateTime.Now;
 
-            await _context.SaveChangesAsync();
-            return true;
+            try
+            {
+                await _notificationService.CreateNotification(
+                    order.Customer.UserID,
+                    $"Đơn hàng #{orderId} đang được vận chuyển đến khách hàng.",
+                    $"/Order/Details/{orderId}",
+                    "fa-check-circle"
+                );
+
+                await _notificationService.CreateNotification(
+                    order.Employee!.UserID,
+                    $"Đơn hàng #{orderId} đang được vận chuyển đến khách hàng.",
+                    $"/Order/Details/{orderId}",
+                    "fa-check-circle"
+                );
+
+                await _context.SaveChangesAsync();
+                return (true, string.Empty, order);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Get the current database values
+                var entry = _context.Entry(order);
+                await entry.ReloadAsync();
+
+                // Check if the order is still in a state that allows delivery acceptance
+                if (order.Status != OrderStatus.Prepared)
+                    return (false, $"Order #{orderId} cannot be accepted for delivery because its status has changed", order);
+
+                // Try updating again with reloaded entity
+                order.ShipperID = shipperId;
+                order.Status = OrderStatus.Delivering;
+                order.DeliveringAt = DateTime.Now;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return (true, string.Empty, order);
+                }
+                catch
+                {
+                    return (false, "Concurrency conflict when accepting order for delivery. Please try again.", order);
+                }
+            }
         }
 
-        public async Task<bool> MarkOrderAsDeliveredAsync(int orderId, int shipperId)
+        public async Task<(bool Success, string ErrorMessage, Order CurrentOrder)> MarkOrderAsDeliveredAsync(int orderId, int shipperId)
         {
             var order = await _context.Orders
                 .Include(o => o.Customer)
                 .Include(o => o.Employee)
-                .FirstOrDefaultAsync(o => 
+                .FirstOrDefaultAsync(o =>
                     o.OrderID == orderId &&
                     o.Status == OrderStatus.Delivering &&
                     o.ShipperID == shipperId);
 
-            if (order == null) return false;
-
-            await _notificationService.CreateNotification(
-                order.Customer.UserID,
-                $"Đơn hàng #{orderId} đã hoàn thành.",
-                $"/Order/Details/{orderId}",
-                "fa-check-circle"
-            );
-
-            await _notificationService.CreateNotification(
-                order.Employee!.UserID,
-                $"Đơn hàng #{orderId} đã hoàn thành.",
-                $"/Order/Details/{orderId}",
-                "fa-check-circle"
-            );
-
-            var orderDetails = await _context.OrderDetails
-                .Include(od => od.Product)
-                .Where(od => od.OrderID == orderId)
-                .ToListAsync();
-
-            foreach (var orderDetail in orderDetails)
-            {
-                var product = await _context.Products.FindAsync(orderDetail.ProductID);
-                if (product != null)
-                {
-                    product.SoldQuantity += orderDetail.Quantity;
-                }
-            }
+            if (order == null)
+                return (false, $"Order #{orderId} not found or not in Delivering state", null);
 
             order.Status = OrderStatus.Completed;
             order.CompletedAt = DateTime.Now;
 
-            await _context.SaveChangesAsync();
-            return true;
+            try
+            {
+                await _notificationService.CreateNotification(
+                    order.Customer.UserID,
+                    $"Đơn hàng #{orderId} đã hoàn thành.",
+                    $"/Order/Details/{orderId}",
+                    "fa-check-circle"
+                );
+
+                await _notificationService.CreateNotification(
+                    order.Employee!.UserID,
+                    $"Đơn hàng #{orderId} đã hoàn thành.",
+                    $"/Order/Details/{orderId}",
+                    "fa-check-circle"
+                );
+
+                var orderDetails = await _context.OrderDetails
+                    .Include(od => od.Product)
+                    .Where(od => od.OrderID == orderId)
+                    .ToListAsync();
+
+                foreach (var orderDetail in orderDetails)
+                {
+                    var product = await _context.Products.FindAsync(orderDetail.ProductID);
+                    if (product != null)
+                    {
+                        product.SoldQuantity += orderDetail.Quantity;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                return (true, string.Empty, order);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Get the current database values
+                var entry = _context.Entry(order);
+                await entry.ReloadAsync();
+
+                // Check if the order is still in a state that allows marking as delivered
+                if (order.Status != OrderStatus.Delivering || order.ShipperID != shipperId)
+                    return (false, $"Order #{orderId} cannot be marked as delivered because its status or assignment has changed", order);
+
+                // Try updating again with reloaded entity
+                order.Status = OrderStatus.Completed;
+                order.CompletedAt = DateTime.Now;
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return (true, string.Empty, order);
+                }
+                catch
+                {
+                    return (false, "Concurrency conflict when marking order as delivered. Please try again.", order);
+                }
+            }
         }
 
         public async Task<Order> CreateOrderAsync(Order order)
@@ -378,21 +536,35 @@ namespace FastFood.MVC.Services
             return order;
         }
 
-        public async Task<bool> UpdateOrderAsync(Order order)
+        public async Task<(bool Success, string ErrorMessage, Order CurrentOrder)> UpdateOrderAsync(Order order)
         {
             try
             {
                 _context.Update(order);
                 await _context.SaveChangesAsync();
-                return true;
+                return (true, string.Empty, order);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
                 if (!await OrderExistsAsync(order.OrderID))
                 {
-                    return false;
+                    return (false, "Order no longer exists", null);
                 }
-                throw;
+
+                // Get the current database values
+                var entry = ex.Entries.Single();
+                var databaseValues = await entry.GetDatabaseValuesAsync();
+
+                if (databaseValues == null)
+                {
+                    return (false, "Order has been deleted", null);
+                }
+
+                // Create a fresh entity with database values
+                var databaseOrder = (Order)databaseValues.ToObject();
+
+                // Return the current database values along with error message
+                return (false, "This order has been modified by another user. The database values are shown below.", databaseOrder);
             }
         }
 

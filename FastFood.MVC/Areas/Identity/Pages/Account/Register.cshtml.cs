@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using FastFood.MVC.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FastFood.MVC.Areas.Identity.Pages.Account
 {
@@ -90,6 +91,7 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account
 
             [Required]
             [Phone]
+            [StringLength(10, MinimumLength = 10, ErrorMessage = "The phone must be 10 numbers")]
             [Display(Name = "Phone number")]
             public string Phone { get; set; }
 
@@ -126,14 +128,22 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
+                var existingUserWithPhone = await _userManager.Users
+                    .FirstOrDefaultAsync(u => u.PhoneNumber == Input.Phone);
+
+                if (existingUserWithPhone != null)
+                {
+                    ModelState.AddModelError(string.Empty, "The phone number has been used.");
+                    return Page();
+                }
+
                 var user = CreateUser();
 
+                user.FullName = Input.FullName;
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+                await _userManager.SetPhoneNumberAsync(user, Input.Phone);
                 var result = await _userManager.CreateAsync(user, Input.Password);
-
-                user.PhoneNumber = Input.Phone;
-                user.FullName = Input.FullName;
 
                 if (result.Succeeded)
                 {

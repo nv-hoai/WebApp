@@ -24,6 +24,11 @@ namespace FastFood.MVC.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [Required]
+        [StringLength(10, MinimumLength = 10, ErrorMessage = "Số điện thoại phải có đúng 10 chữ số.")]
+        [Phone]
+        public override string? PhoneNumber { get; set; }
+
         public virtual ICollection<ApplicationUserClaim> Claims { get; set; } = new HashSet<ApplicationUserClaim>();
         public virtual ICollection<ApplicationUserLogin> Logins { get; set; } = new HashSet<ApplicationUserLogin>();
         public virtual ICollection<ApplicationUserToken> Tokens { get; set; } = new HashSet<ApplicationUserToken>();
