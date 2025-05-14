@@ -157,13 +157,27 @@ namespace FastFood.MVC.Controllers
 
             if (ModelState.IsValid)
             {
-                bool success = await _orderService.UpdateOrderAsync(order);
-                if (!success)
+                var result = await _orderService.UpdateOrderAsync(order);
+
+                if (!result.Success)
                 {
-                    return NotFound();
+                    if (result.CurrentOrder != null)
+                    {
+                        // Update the RowVersion to the current database value
+                        order.RowVersion = result.CurrentOrder.RowVersion;
+                        ModelState.AddModelError("", result.ErrorMessage);
+                    }
+                    else
+                    {
+                        return NotFound(result.ErrorMessage);
+                    }
                 }
-                return RedirectToAction(nameof(Index));
+                else
+                {
+                    return RedirectToAction(nameof(Index));
+                }
             }
+
             ViewData["CustomerID"] = new SelectList(_context.Customers, "CustomerID", "CustomerID", order.CustomerID);
             ViewData["EmployeeID"] = new SelectList(_context.Employees, "EmployeeID", "EmployeeID", order.EmployeeID);
             ViewData["ShipperID"] = new SelectList(_context.Shippers, "ShipperID", "ShipperID", order.ShipperID);
@@ -227,11 +241,11 @@ namespace FastFood.MVC.Controllers
             var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdminOrEmployee = (await _authorization.AuthorizeAsync(User, "AdminOrEmployeeAccess")).Succeeded;
 
-            var success = await _orderService.CancelOrderAsync(orderID, userID, note, isAdminOrEmployee);
+            var result = await _orderService.CancelOrderAsync(orderID, userID, note, isAdminOrEmployee);
 
-            if (!success)
+            if (!result.Success)
             {
-                return Json(new { success = false, message = $"Không tìm thấy đơn hàng #{orderID} hoặc không thể hủy." });
+                return Json(new { success = false, message = result.ErrorMessage });
             }
 
             return Json(new { success = true, message = $"Đơn hàng #{orderID} đã được hủy." });
@@ -250,11 +264,11 @@ namespace FastFood.MVC.Controllers
                 return Json(new { success = false, message = "Employee profile not found" });
             }
 
-            var success = await _orderService.AcceptOrderAsync(orderID, employee.EmployeeID);
+            var result = await _orderService.AcceptOrderAsync(orderID, employee.EmployeeID);
 
-            if (!success)
+            if (!result.Success)
             {
-                return Json(new { success = false, message = $"Order #{orderID} not found or is not in Pending state" });
+                return Json(new { success = false, message = result.ErrorMessage });
             }
 
             return Json(new { success = true, message = $"Order #{orderID} has been accepted and is now being processed" });
@@ -265,11 +279,11 @@ namespace FastFood.MVC.Controllers
         [Authorize(Policy = "EmployeeAccess")]
         public async Task<IActionResult> MarkAsPrepared(int orderID)
         {
-            var success = await _orderService.MarkOrderAsPreparedAsync(orderID);
+            var result = await _orderService.MarkOrderAsPreparedAsync(orderID);
 
-            if (!success)
+            if (!result.Success)
             {
-                return Json(new { success = false, message = $"Order #{orderID} not found or is not in Processing state" });
+                return Json(new { success = false, message = result.ErrorMessage });
             }
 
             return Json(new { success = true, message = $"Order #{orderID} is now ready for delivery" });
@@ -288,11 +302,11 @@ namespace FastFood.MVC.Controllers
                 return Json(new { success = false, message = "Shipper profile not found" });
             }
 
-            var success = await _orderService.AcceptDeliveryAsync(orderID, shipper.ShipperID);
+            var result = await _orderService.AcceptDeliveryAsync(orderID, shipper.ShipperID);
 
-            if (!success)
+            if (!result.Success)
             {
-                return Json(new { success = false, message = $"Order #{orderID} not found or is not ready for delivery" });
+                return Json(new { success = false, message = result.ErrorMessage });
             }
 
             return Json(new { success = true, message = $"You have accepted order #{orderID} for delivery" });
@@ -311,11 +325,11 @@ namespace FastFood.MVC.Controllers
                 return Json(new { success = false, message = "Shipper profile not found" });
             }
 
-            var success = await _orderService.MarkOrderAsDeliveredAsync(orderID, shipper.ShipperID);
+            var result = await _orderService.MarkOrderAsDeliveredAsync(orderID, shipper.ShipperID);
 
-            if (!success)
+            if (!result.Success)
             {
-                return Json(new { success = false, message = $"Order #{orderID} not found or not assigned to you for delivery" });
+                return Json(new { success = false, message = result.ErrorMessage });
             }
 
             return Json(new { success = true, message = $"Order #{orderID} has been marked as delivered" });

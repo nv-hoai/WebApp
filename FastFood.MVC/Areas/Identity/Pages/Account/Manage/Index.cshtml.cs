@@ -4,12 +4,14 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using FastFood.MVC.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace FastFood.MVC.Areas.Identity.Pages.Account.Manage
 {
@@ -58,6 +60,7 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account.Manage
             /// </summary>
             [Phone]
             [Display(Name = "Phone number")]
+            [StringLength(10, MinimumLength = 10, ErrorMessage = "The phone must be 10 numbers")]
             [Required]
             public string PhoneNumber { get; set; }
 
@@ -98,6 +101,16 @@ namespace FastFood.MVC.Areas.Identity.Pages.Account.Manage
             if (user == null)
             {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var existingUserWithPhone = await _userManager.Users
+                .FirstOrDefaultAsync(u => u.Id != userID && u.PhoneNumber == Input.PhoneNumber);
+
+            if (existingUserWithPhone != null)
+            {
+                ModelState.AddModelError(string.Empty, "The phone number has been used.");
+                return Page();
             }
 
             if (!ModelState.IsValid)

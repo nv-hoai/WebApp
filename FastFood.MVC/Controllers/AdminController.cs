@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace FastFood.MVC.Controllers
 {
@@ -85,14 +86,22 @@ namespace FastFood.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                var existingUserWithPhone = await _userManager.Users
+                    .FirstOrDefaultAsync(u => u.PhoneNumber == model.PhoneNumber);
+
+                if (existingUserWithPhone != null)
+                {
+                    ModelState.AddModelError("PhoneNumber", "The phone number has been used.");
+                    return PartialView("_RegisterModal", model);
+                }
+
                 var user = CreateUser();
 
+                user.FullName = model.FullName;
+                user.PhoneNumber = model.PhoneNumber;
                 await _userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, model.Email, CancellationToken.None);
                 var result = await _userManager.CreateAsync(user, model.Password);
-
-                user.PhoneNumber = model.PhoneNumber;
-                user.FullName = model.FullName;
 
                 if (result.Succeeded)
                 {
@@ -176,6 +185,16 @@ namespace FastFood.MVC.Controllers
 
             if (ModelState.IsValid)
             {
+                var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var existingUserWithPhone = await _userManager.Users
+                    .FirstOrDefaultAsync(u => u.Id != userID && u.PhoneNumber == model.PhoneNumber);
+
+                if (existingUserWithPhone != null)
+                {
+                    ModelState.AddModelError("PhoneNumber", "The phone number has been used.");
+                    return PartialView("_RegisterModal", model);
+                }
+
                 if (model.Email != oldEmail)
                 {
                     await _userStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
@@ -183,7 +202,7 @@ namespace FastFood.MVC.Controllers
                 }
 
                 if (model.PhoneNumber != user.PhoneNumber)
-                    user.PhoneNumber = model.PhoneNumber;
+                    await _userManager.SetPhoneNumberAsync(user, model.PhoneNumber!);
 
                 if (model.FullName != user.FullName)
                     user.FullName = model.FullName;
@@ -237,37 +256,22 @@ namespace FastFood.MVC.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                bool changePassword = true;
-
                 if (!model.NewPassword.IsNullOrEmpty())
                 {
-                    changePassword = false;
                     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    var result1 = await _userManager.ResetPasswordAsync(user, token, model.NewPassword!);
-
-                    if (result1.Succeeded)
-                    {
-                        changePassword = true;
-                    }
-                    else
-                    {
-                        foreach (var error in result1.Errors)
-                        {
-                            ModelState.AddModelError(string.Empty, error.Description);
-                        }
-                    }
+                    await _userManager.ResetPasswordAsync(user, token, model.NewPassword!);
                 }
 
-                var result2 = await _userManager.UpdateAsync(user);
+                var result = await _userManager.UpdateAsync(user);
 
-                if (changePassword && result2.Succeeded)
+                if (result.Succeeded)
                 {
                     _logger.LogInformation("User updated their profile successfully.");
                     return RedirectToAction("Index");
                 }
-                else if (!result2.Succeeded)
+                else if (!result.Succeeded)
                 {
-                    foreach (var error in result2.Errors)
+                    foreach (var error in result.Errors)
                     {
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
