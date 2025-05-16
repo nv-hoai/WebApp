@@ -23,9 +23,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <form method="get" asp-action="Index" asp-controller="Order" class="w-100">
         <div class="row g-2 align-items-center">
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Mã đơn hàng..." name="orderId" value="@Context.Request.Query["orderId"]">
+                    <input type="text" class="form-control" placeholder="ID" name="orderId" value="@Context.Request.Query["orderId"]">
                 </div>
             </div>
             <div class="col-md-2">
@@ -51,7 +51,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="d-flex">
                     <button type="submit" class="btn btn-primary me-2" title="Tìm kiếm">
                         <i class="bi bi-search"></i> Tìm kiếm
@@ -118,7 +118,7 @@
                             else if (item.Status == OrderStatus.Processing)
                             {
                                 <button class="btn btn-success btn-sm btn-mark-prepared" data-id="@item.OrderID">
-                                    <i class="fa fa-utensils"></i> Đã chuẩn bị xong
+                                    <i class="fa fa-utensils"></i> Đã đóng gói
                                 </button>
                             }
 

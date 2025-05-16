@@ -29,7 +29,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h5 class="card-title">Doanh thu</h5>
-                        <h3>@Model.TotalRevenue</h3>
+                        <h3>@Model.TotalRevenue.ToString("N0") 000 VND</h3>
                     </div>
                     <div class="card-icon fs-2"><i class="fas fa-money-bill"></i></div>
                 </div>
@@ -98,7 +98,7 @@
 						<td>@order.OrderID</td>
 						<td>@order.CustomerName</td>
 						<td>@order.OrderTime.ToString("hh:mm tt")</td>
-						<td>@order.TotalAmount.ToString("N0")₫</td>
+						<td>@order.TotalAmount.ToString("N0") 000 VND</td>
 						<td><span class="badge bg-@(order.Status ==  OrderStatus.Completed ? "success" : "warning")">@order.Status</span></td>
 					</tr>
 				}
@@ -116,7 +116,7 @@
             data: {
                 labels: [@Html.Raw(string.Join(",", Model.Last7DaysRevenue.Select(d => $"'{d.Date.ToString("ddd")}'").ToArray()))],
                 datasets: [{
-                    label: 'Doanh thu (VND)',
+                    label: 'Doanh thu (nghìn đồng)',
                     data: [@string.Join(",", Model.Last7DaysRevenue.Select(d => d.Revenue).ToArray())],
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -131,7 +131,7 @@
                         beginAtZero: true,
                         ticks: {
                             callback: function(value, index, values) {
-                                return value.toLocaleString('vi-VN') + ' ₫';
+                                return value.toLocaleString('vi-VN');
                             }
                         }
                     }
