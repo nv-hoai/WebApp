@@ -26,7 +26,7 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-7">
                 <dl class="row">
                     <dt class="col-sm-4">Khách hàng:</dt>
                     <dd class="col-sm-8">@(Model.Customer?.User?.FullName ?? "N/A")</dd>
@@ -38,14 +38,13 @@
                     <dd class="col-sm-8">@GetShippingMethodDisplayName(Model.ShippingMethod)</dd>
 
                     <dt class="col-sm-4">Phí vận chuyển:</dt>
-                    <dd class="col-sm-8">@Model.ShippingFee.ToString("N0") VND</dd>
-                </dl>
-            </div>
-            <div class="col-md-6">
-                <dl class="row">
+                    <dd class="col-sm-8">@Model.ShippingFee.ToString("N0") 000 VND</dd>
                     <dt class="col-sm-4">Ngày tạo đơn:</dt>
                     <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
-
+                </dl>
+            </div>
+            <div class="col-md-5">
+                <dl class="row">
                     @if ((await AuthorizationService.AuthorizeAsync(User, "AdminOrEmployeeOrShipperAccess")).Succeeded)
                     {
                         <dt class="col-sm-4">Nhân viên xử lý:</dt>
@@ -158,24 +157,24 @@
                     <tr>
                         <td>@item.ProductName</td>
                         <td>@item.Quantity</td>
-                        <td>@item.UnitPrice.ToString("N0") VND</td>
-                        <td>@item.DiscountedPrice.ToString("N0") VND</td>
-                        <td>@item.SubTotal.ToString("N0") VND</td>
+                        <td>@item.UnitPrice.ToString("N0") 000 VND</td>
+                        <td>@item.DiscountedPrice.ToString("N0") 000 VND</td>
+                        <td>@item.SubTotal.ToString("N0") 000 VND</td>
                     </tr>
                 }
             </tbody>
             <tfoot>
                 <tr>
                     <td colspan="4" class="text-end"><strong>Tổng tiền hàng:</strong></td>
-                    <td>@Model.SubTotal.ToString("N0") VND</td>
+                    <td>@Model.SubTotal.ToString("N0") 000 VND</td>
                 </tr>
                 <tr>
                     <td colspan="4" class="text-end"><strong>Phí giao hàng:</strong></td>
-                    <td>@Model.ShippingFee.ToString("N0") VND</td>
+                    <td>@Model.ShippingFee.ToString("N0") 000 VND</td>
                 </tr>
                 <tr>
                     <td colspan="4" class="text-end"><strong>Tổng thanh toán:</strong></td>
-                    <td><strong>@(Model.TotalCharge?.ToString("N0") ?? "0") VND</strong></td>
+                    <td><strong>@(Model.TotalCharge?.ToString("N0") ?? "0") 000 VND</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -198,7 +197,7 @@
         else if (Model.Status == OrderStatus.Processing)
         {
             <button class="btn btn-success btn-mark-prepared" data-id="@Model.OrderID">
-                <i class="fa fa-utensils"></i> Đã chuẩn bị xong
+                <i class="fa fa-utensils"></i> Đã đóng gói
             </button>
         }
 
